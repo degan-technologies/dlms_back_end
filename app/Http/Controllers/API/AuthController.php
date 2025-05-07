@@ -79,7 +79,9 @@ class AuthController extends Controller
     // Logout user (revoke and clear cookie)
     public function logout(Request $request)
     {
-        $request->user()->token()->revoke();
+        $token = $request->user()->token();
+        $token->revoke();
+        $token->delete();
 
         return response()->json(['message' => 'Successfully logged out'])
             ->withoutCookie('access_token');
