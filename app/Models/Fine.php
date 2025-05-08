@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Fine extends Model
 {
     use SoftDeletes;
-    protected $primaryKey = 'FineID';
+   
     protected $fillable = [
-        'library_branch_id','user_id','LoanID',
-        'FineAmount','FineDate','reason',
-        'PaymentDate','PaymentStatus'
+        'library_branch_id','user_id','loan_id',
+        'fine_amount','fine_date','reason',
+        'payment_date','Payment_status'
     ];
 
     public function branch()
@@ -25,7 +25,7 @@ class Fine extends Model
     }
     public function loan()
     {
-        return $this->belongsTo(Loan::class,'LoanID');
+        return $this->belongsTo(Loan::class,'loan_id');
     }
 }
 

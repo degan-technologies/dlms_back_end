@@ -18,7 +18,7 @@ class CreateLoansTable extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreignId('student_id')->constrained('students')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreignId('student_id')->constrained('users')->onDelete('restrict')->onUpdate('cascade');
             $table->foreignId('book_item_id')->constrained('book_items')->onDelete('restrict')->onUpdate('cascade');
             $table->foreignId('library_branch_id')->constrained('library_branches')->onDelete('restrict')->onUpdate('cascade');
         });

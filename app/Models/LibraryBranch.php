@@ -9,6 +9,7 @@ class LibraryBranch extends Model
 {
     use SoftDeletes;
     protected $fillable = [
+        'library_id',
         'branch_name',
         'address',
         'contact_number',

@@ -4,6 +4,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -37,7 +38,8 @@ class AuthController extends Controller
 
         $token = $user->createToken('API Token')->accessToken;
 
-        return response()->json(['token' => $token], 201)
+        return response()->json(['token' => $token, 
+    ], 201)
             ->cookie('access_token', $token, 60 * 24, null, null, true, true, false, 'Strict');
     }
 

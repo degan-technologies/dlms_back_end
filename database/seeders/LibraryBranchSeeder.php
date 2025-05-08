@@ -13,13 +13,35 @@ class LibraryBranchSeeder extends Seeder
     {
         $library = Library::first(); // assumes LibrarySeeder already ran
 
-        LibraryBranch::create([
-            'branch_name' => 'Downtown Branch',
-            'address' => '456 Market Street',
-            'contact_number' => '0987654321',
-            'email' => 'downtown@library.com',
-            'opening_hours' => '9 AM - 5 PM',
-            'library_id' => $library->id,
-        ]);
+        $branches = [
+            [
+                'branch_name' => 'Downtown Branch',
+                'address' => '456 Market Street',
+                'contact_number' => '0987654321',
+                'email' => 'downtown@library.com',
+                'opening_hours' => '9 AM - 5 PM',
+                'library_id' => $library->id,
+            ],
+            [
+                'branch_name' => 'Eastside Branch',
+                'address' => '123 East Street',
+                'contact_number' => '0123456789',
+                'email' => 'eastside@library.com',
+                'opening_hours' => '10 AM - 6 PM',
+                'library_id' => $library->id,
+            ],
+            [
+                'branch_name' => 'Westside Branch',
+                'address' => '789 West Avenue',
+                'contact_number' => '9876543210',
+                'email' => 'westside@library.com',
+                'opening_hours' => '8 AM - 4 PM',
+                'library_id' => $library->id,
+            ],
+        ];
+
+        foreach ($branches as $branch) {
+            LibraryBranch::updateOrCreate(['branch_name' => $branch['branch_name']], $branch);
+        }
     }
 }

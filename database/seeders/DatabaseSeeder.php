@@ -18,6 +18,16 @@ class DatabaseSeeder extends Seeder
             LibrarySeeder::class,
             LibraryBranchSeeder::class,
             RoleSeeder::class,
+            SectionSeeder::class,
+            ShelvesSeeder::class,
+            
+            UserSeeder::class,
+            CategorySeeder::class,
+            BookItemSeeder::class,
+            LoanSeeder::class,
+            FineSeeder::class,
+           
         ]);
+
     }
 }
