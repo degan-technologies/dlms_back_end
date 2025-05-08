@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Section extends Model
 {
     use SoftDeletes;
-    protected $primaryKey = 'SectionID';
+    
     protected $fillable = ['SectionName','library_branch_id'];
 
     public function branch()
@@ -20,4 +20,3 @@ class Section extends Model
         return $this->hasMany(Shelf::class, 'SectionID');
     }
 }
-
