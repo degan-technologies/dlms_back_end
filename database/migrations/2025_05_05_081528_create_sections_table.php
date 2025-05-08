@@ -10,7 +10,7 @@ class CreateSectionsTable extends Migration
     {
         Schema::create('sections', function (Blueprint $table) {
             $table->id();
-            $table->string('SectionName',100);
+            $table->string('section_name',100);
             $table->timestamps();
             $table->softDeletes();
 

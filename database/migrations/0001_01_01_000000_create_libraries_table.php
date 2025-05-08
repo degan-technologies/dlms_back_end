@@ -14,6 +14,8 @@ class CreateLibrariesTable extends Migration
             $table->string('address');
             $table->string('contact_number');
             $table->timestamps(); // created_at, updated_at
+            $table->softDeletes(); // deleted_at
+
 
         });
     }

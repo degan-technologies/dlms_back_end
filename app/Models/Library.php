@@ -7,13 +7,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Library extends Model
 {
-    
+
     use SoftDeletes;
-    protected $fillable = ['branch_id','name'];
+    protected $fillable = ['branch_id','name', 'address', 'contact_number',];
 
     public function branch()
     {
         return $this->belongsTo(LibraryBranch::class, 'branch_id');
     }
 }
-

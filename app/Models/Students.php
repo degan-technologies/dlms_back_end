@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Staff extends Model
+class Students extends Model
 {
     use SoftDeletes;
     protected $fillable = [
-        'user_id','FirstName','LastName','library_branch_id'
+        'user_id','FirstName','LastName','Address',
+        'grade','section','sex','BranchID','gender'
     ];
 
     public function user()
@@ -18,7 +19,7 @@ class Staff extends Model
     }
     public function branch()
     {
-        return $this->belongsTo(LibraryBranch::class,'library_branch_id');
+        return $this->belongsTo(LibraryBranch::class,);
     }
 }
 

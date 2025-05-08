@@ -15,7 +15,7 @@ class CreateStudentsTable extends Migration
             $table->string('Address',255)->nullable();
             $table->string('grade')->nullable();
             $table->string('section')->nullable();
-            $table->smallInteger('gender');
+            $table->string('gender');
             $table->timestamps();
             $table->softDeletes();
 
