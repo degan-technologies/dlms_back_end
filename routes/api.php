@@ -4,6 +4,7 @@ use App\Http\Controllers\API\LibraryBranchController;
 use App\Http\Controllers\API\LibraryController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\API\SectionController;
 use Illuminate\Support\Facades\Route;
 
 // 🔓 Public routes
@@ -17,7 +18,8 @@ Route::middleware(['auth:api'])->group(function () {
 
 // 📚 both Super Admin and admin - full access
     Route::middleware('role:super-admin|admin')->group(function () {
-        Route::resource('/libraries', LibraryController::class);
+        Route::Resource('/libraries', LibraryController::class);
+        Route::apiResource('/sections', SectionController::class);
 
     });
 
