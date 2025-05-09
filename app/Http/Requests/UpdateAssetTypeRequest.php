@@ -28,7 +28,7 @@ class UpdateAssetTypeRequest extends FormRequest
                 'sometimes',
                 'string',
                 'max:50',
-                Rule::unique('asset_types')->ignore($this->route('asset_type'))
+                Rule::unique('asset_types')->ignore(request()->route()->parameter('asset_type'))
             ],
             'description' => 'nullable|string',
             'is_electronic' => 'boolean',
