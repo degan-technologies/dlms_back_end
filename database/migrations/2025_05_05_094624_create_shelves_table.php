@@ -10,11 +10,15 @@ class CreateShelvesTable extends Migration
     {
         Schema::create('shelves', function (Blueprint $table) {
             $table->id();
-            $table->string('ShelfCode',20)->unique();
+            $table->string('code', 20);
+            $table->string('location')->nullable();
+            $table->integer('capacity')->default(100);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();
 
             $table->foreignId('section_id')
+                  ->nullable()
                   ->constrained('sections')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
@@ -23,6 +27,9 @@ class CreateShelvesTable extends Migration
                   ->constrained('library_branches')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
+                  
+            // Create a unique constraint on code + branch_id
+            $table->unique(['code', 'library_branch_id']);
         });
     }
 

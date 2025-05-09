@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Publisher extends Model
 {
     use SoftDeletes;
-    protected $primaryKey = 'PublisherID';
+    
 
 
-    protected $fillable = ['PublisherName', 'Address', 'ContactInfo'];
+    protected $fillable = ['publisher_name', 'address', 'contact_info'];
 
     public function books()
     {
-        return $this->hasMany(Book::class, 'PublisherID');
+        return $this->hasMany(Book::class);
     }
 }

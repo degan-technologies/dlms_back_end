@@ -13,9 +13,9 @@ class CreateLibrariesTable extends Migration
             $table->string('name');
             $table->string('address');
             $table->string('contact_number');
+            $table->foreignId('library_branch_id')->constrained('library_branches')->onDelete('restrict')->onUpdate('cascade');
             $table->timestamps(); // created_at, updated_at
             $table->softDeletes(); // deleted_at
-
 
         });
     }
