@@ -9,14 +9,14 @@ class Section extends Model
 {
     use SoftDeletes;
     
-    protected $fillable = ['SectionName','library_branch_id'];
+    protected $fillable = ['section_name','library_branch_id'];
 
     public function branch()
     {
-        return $this->belongsTo(LibraryBranch::class, 'library_branch_id');
+        return $this->belongsTo(LibraryBranch::class);
     }
     public function shelves()
     {
-        return $this->hasMany(Shelf::class, 'SectionID');
+        return $this->hasMany(Shelf::class);
     }
 }

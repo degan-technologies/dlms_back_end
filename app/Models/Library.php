@@ -13,6 +13,20 @@ class Library extends Model
 
     public function branch()
     {
-        return $this->belongsTo(LibraryBranch::class, 'branch_id');
+        return $this->belongsTo(LibraryBranch::class );
+    }
+    public function sections()
+    {
+        return $this->hasMany(Section::class);
+    }
+
+    public function shelves()
+    {
+        return $this->hasMany(Shelf::class);
+    }
+
+    public function bookItems()
+    {
+        return $this->hasMany(BookItem::class);
     }
 }

@@ -15,7 +15,7 @@ class CreateLibraryBranchesTable extends Migration
             $table->string('contact_number', 20)->nullable();
             $table->string('email')->nullable();
             $table->string('opening_hours')->nullable();
-            $table->foreignId('library_id')->constrained('libraries')->onDelete('restrict')->onUpdate('cascade');
+           
             $table->timestamps();
             $table->softDeletes();
         });

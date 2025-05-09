@@ -15,6 +15,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware(['auth:api'])->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', [AuthController::class, 'user']);
 
 // 📚 both Super Admin and admin - full access
     Route::middleware('role:super-admin|admin')->group(function () {

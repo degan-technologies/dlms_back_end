@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserResource extends JsonResource
@@ -10,19 +9,36 @@ class UserResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @return array<string, mixed>
+     * @param  \Illuminate\Http\Request  $request
+     * @return array|\Illuminate\Contracts\Support\Arrayable|\JsonSerializable
      */
-    public function toArray(Request $request): array
+    public function toArray($request)
     {
         return [
             'id' => $this->id,
             'username' => $this->username,
-            'phoneNo' => $this->phone_no,
             'email' => $this->email,
-            'emailVerifiedAt' => $this->email_verified_at?->toDateTimeString(),
-            'libraryBranchId' => $this->library_branch_id,
-            'createdAt' => $this->created_at?->toDateTimeString(),
-            'updatedAt' => $this->updated_at?->toDateTimeString(),
+            'phone_no' => $this->phone_no,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+            'full_name' => $this->first_name . ' ' . $this->last_name,
+            'library_branch_id' => $this->library_branch_id,
+            'library_branch' => $this->whenLoaded('libraryBranch', function () {
+                return [
+                    'id' => $this->libraryBranch->id,
+                    'branch_name' => $this->libraryBranch->branch_name,
+                ];
+            }),
+            'roles' => $this->whenLoaded('roles', function () {
+                return $this->roles->map(function ($role) {
+                    return [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                    ];
+                });
+            }),
+            
+            
         ];
     }
 }
