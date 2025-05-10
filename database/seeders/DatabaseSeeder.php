@@ -37,6 +37,9 @@ class DatabaseSeeder extends Seeder
             OtherAssetSeeder::class,   // Other assets (child)
         ]);
         
-        // Add any additional seeders below
+        // Seed user library features
+        $this->call([
+            LibraryFeatureSeeder::class, // Bookmarks, Notes, Reading Lists, Recently Viewed
+        ]);
     }
 }

@@ -111,4 +111,20 @@ class EBook extends Model
     {
         return strtolower($this->file_format);
     }
+
+    /**
+     * Get all bookmarks for this ebook.
+     */
+    public function bookmarks()
+    {
+        return $this->morphMany(Bookmark::class, 'bookmarkable');
+    }
+
+    /**
+     * Get all notes for this ebook.
+     */
+    public function notes()
+    {
+        return $this->morphMany(Note::class, 'notable');
+    }
 }

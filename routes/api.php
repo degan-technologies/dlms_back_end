@@ -5,6 +5,7 @@ use App\Http\Controllers\API\LibraryController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\API\SectionController;
+use App\Http\Controllers\Api\V1\BookItemController;
 use Illuminate\Support\Facades\Route;
 
 // 🔓 Public routes
@@ -13,9 +14,27 @@ Route::post('/register', [AuthController::class, 'register']);
 
 // 🔐 Protected routes
 Route::middleware(['auth:api'])->group(function () {
+     Route::get('/book/item', [BookItemController::class, 'index']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+    
+    // User bookmarks routes
+    Route::apiResource('bookmarks', App\Http\Controllers\API\V1\BookmarkController::class);
+    
+    // User notes routes
+    Route::apiResource('notes', App\Http\Controllers\API\V1\NoteController::class);
+    
+    // User reading lists routes
+    Route::apiResource('reading-lists', App\Http\Controllers\API\V1\ReadingListController::class);
+    Route::post('reading-lists/{readingList}/add-book', [App\Http\Controllers\API\V1\ReadingListController::class, 'addBookItem']);
+    Route::delete('reading-lists/{readingList}/remove-book', [App\Http\Controllers\API\V1\ReadingListController::class, 'removeBookItem']);
+    
+    // Recently viewed resources routes
+    Route::get('recently-viewed', [App\Http\Controllers\API\V1\RecentlyViewedController::class, 'index']);
+    Route::post('recently-viewed/track', [App\Http\Controllers\API\V1\RecentlyViewedController::class, 'trackView']);
+    Route::delete('recently-viewed/clear', [App\Http\Controllers\API\V1\RecentlyViewedController::class, 'clearAll']);
+    Route::delete('recently-viewed/{recentlyViewed}', [App\Http\Controllers\API\V1\RecentlyViewedController::class, 'destroy']);
 
 // 📚 both Super Admin and admin - full access
     Route::middleware('role:super-admin|admin')->group(function () {
@@ -50,5 +69,6 @@ Route::middleware(['auth:api'])->group(function () {
     // 🎓 Student
     Route::middleware('role:student')->group(function () {
         // Route::resource('students', StudentController::class);
+       
     });
 });
