@@ -74,7 +74,7 @@ class BookItemController extends Controller
         }
         
         // Paginate results
-        $perPage = $request->query('per_page', 15);
+        $perPage = $request->query('per_page', 5);
         $bookItems = $query->paginate($perPage);
         
         return new BookItemCollection($bookItems);

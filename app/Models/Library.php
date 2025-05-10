@@ -9,9 +9,9 @@ class Library extends Model
 {
 
     use SoftDeletes;
-    protected $fillable = ['branch_id','name', 'address', 'contact_number',];
+    protected $fillable = ['library_branch_id','name', 'address', 'contact_number',];
 
-    public function branch()
+    public function libraryBranch()
     {
         return $this->belongsTo(LibraryBranch::class );
     }
