@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Fine;
 use Illuminate\Http\Request;
+use App\Http\Resources\Fine\FineResource;
 
 class FineController extends Controller
 {
@@ -13,7 +14,7 @@ class FineController extends Controller
     public function index()
     {
         $fines = Fine::all();
-        return response()->json($fines, 200);
+        return FineResource::collection($fines);
     }
 
     /**
@@ -34,7 +35,7 @@ class FineController extends Controller
 
         $fine = Fine::create($validated);
 
-        return response()->json($fine, 201);
+        return new FineResource($fine);
     }
 
     /**
@@ -43,7 +44,8 @@ class FineController extends Controller
     public function show($id)
     {
         $fine = Fine::findOrFail($id);
-        return response()->json($fine, 200);
+        return new FineResource($fine);
+
     }
 
     /**
@@ -66,7 +68,7 @@ class FineController extends Controller
 
         $fine->update($validated);
 
-        return response()->json($fine, 200);
+        return new FineResource($fine);
     }
 
     /**

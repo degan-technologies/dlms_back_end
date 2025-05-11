@@ -27,7 +27,7 @@ class AuthController extends Controller
     {
         // Get validated data
         $validated = $request->validated();
-        
+
         // Create the user with validated data
         $user = User::create([
             'username' => $validated['username'],
@@ -49,7 +49,7 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'User registered successfully',
             'user' => new UserResource($user),
-            'token' => $token, 
+            'token' => $token,
         ], Response::HTTP_CREATED)
             ->cookie('access_token', $token, 60 * 24, null, null, true, true, false, 'Strict');
     }
@@ -85,7 +85,7 @@ class AuthController extends Controller
         // Return response with token and cookie
         return response()->json([
             'message' => 'Login successful',
-            'user' => new UserResource($user),
+            'user' => new UserResource($user->load(['libraryBranch', 'roles'])),
             'token' => $token,
         ], Response::HTTP_OK)
             ->cookie('access_token', $token, $minutes, '/', null, true, true, false, 'Strict');
@@ -102,7 +102,7 @@ class AuthController extends Controller
         // Load relationships for the resource
         $user = $request->user();
         $user->load(['roles.permissions', 'libraryBranch']);
-        
+
         return response()->json([
             'user' => new UserResource($user),
         ], Response::HTTP_OK);
@@ -229,10 +229,10 @@ class AuthController extends Controller
         // Revoke current token
         $request->user()->token()->revoke();
         $request->user()->token()->delete();
-        
+
         // Create new token
         $token = $request->user()->createToken('API Token')->accessToken;
-        
+
         return response()->json([
             'message' => 'Token refreshed',
             'token' => $token,

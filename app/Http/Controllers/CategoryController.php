@@ -4,17 +4,37 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
-
+use App\Http\Resources\Category\CategoryResource;
 class CategoryController extends Controller
 {
     /**
      * Display a listing of categories.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::all();
-        return response()->json($categories, 200);
+        // Read per-page from the query string, default to 10
+        $perPage = (int) $request->query('pageSize', 10);
+    
+        // Get paginated result
+        $paginator = Category::paginate($perPage);
+    
+        // Create the resource collection
+        $resource = CategoryResource::collection($paginator);
+    
+        // Add pagination meta explicitly if needed
+        return response()->json([
+            'data' => $resource->collection,
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
+        ], 200);
     }
+    
 
     /**
      * Store a newly created category.
@@ -27,7 +47,7 @@ class CategoryController extends Controller
 
         $category = Category::create($validated);
 
-        return response()->json($category, 201);
+        return new CategoryResource($category); // Use resource
     }
 
     /**
@@ -36,7 +56,7 @@ class CategoryController extends Controller
     public function show($id)
     {
         $category = Category::findOrFail($id);
-        return response()->json($category, 200);
+        return new CategoryResource($category); // Use resource
     }
 
     /**
@@ -44,6 +64,8 @@ class CategoryController extends Controller
      */
     public function update(Request $request, $id)
     {
+       
+
         $category = Category::findOrFail($id);
 
         $validated = $request->validate([
@@ -52,8 +74,23 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
-        return response()->json($category, 200);
+        return new CategoryResource($category); // Use resource
     }
+
+    // In your Laravel controller
+    public function destroyMultiple(Request $request)
+    {
+        $ids = $request->input('ids');
+    
+        if (!is_array($ids) || empty($ids)) {
+            return response()->json(['message' => 'Invalid or empty IDs.'], 422);
+        }
+    
+        Category::whereIn('id', $ids)->delete();
+    
+        return response()->json(['message' => 'Categories deleted successfully.']);
+    }
+    
 
     /**
      * Soft‑delete the specified category.

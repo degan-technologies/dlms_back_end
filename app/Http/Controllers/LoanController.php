@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Http\Resources\Loan\LoanResource;
 use App\Models\Loan;
 use Illuminate\Http\Request;
 
@@ -13,7 +13,7 @@ class LoanController extends Controller
     public function index()
     {
         $loans = Loan::all();
-        return response()->json($loans);
+        return LoanResource::collection($loans);
     }
 
     /**
@@ -31,7 +31,7 @@ class LoanController extends Controller
         ]);
 
         $loan = Loan::create($validatedData);
-        return response()->json($loan, 201);
+        return new LoanResource($loan);
     }
 
     /**
@@ -40,7 +40,7 @@ class LoanController extends Controller
     public function show($id)
     {
         $loan = Loan::findOrFail($id);
-        return response()->json($loan);
+        return new LoanResource($loan);
     }
 
     /**
@@ -59,7 +59,7 @@ class LoanController extends Controller
 
         $loan = Loan::findOrFail($id);
         $loan->update($validatedData);
-        return response()->json($loan);
+        return new LoanResource($loan);
     }
 
     /**
