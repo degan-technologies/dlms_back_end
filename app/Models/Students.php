@@ -10,7 +10,7 @@ class Students extends Model
     use SoftDeletes;
     protected $fillable = [
         'user_id','FirstName','LastName','Address',
-        'grade','section','sex','BranchID','gender'
+        'grade','section','sex','BranchID','gender','phone_no','email'
     ];
 
     public function user()

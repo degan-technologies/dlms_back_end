@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class StaffResource extends JsonResource
+class AdminResource extends JsonResource
 {
     public function toArray($request)
     {
@@ -12,13 +12,12 @@ class StaffResource extends JsonResource
             'id' => $this->id,
             'FirstName' => $this->FirstName,
             'LastName' => $this->LastName,
+            'email' => $this->email,
+            'phone_no' => $this->phone_no,
             'user_id' => $this->user_id,
             'library_branch_id' => $this->library_branch_id,
-            'phone_no' => $this->phone_no,
-            'email' => $this->email,
-            'department' => $this->department,
-            // 'created_at' => $this->created_at,
-            // 'updated_at' => $this->updated_at,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

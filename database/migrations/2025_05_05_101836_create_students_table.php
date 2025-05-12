@@ -13,9 +13,11 @@ class CreateStudentsTable extends Migration
             $table->string('FirstName',100);
             $table->string('LastName',100);
             $table->string('Address',255)->nullable();
-            $table->string('grade')->nullable();
+            $table->string('grade');
             $table->string('section')->nullable();
             $table->string('gender');
+            $table->string('phone_no')->nullable();
+            $table->string('email')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

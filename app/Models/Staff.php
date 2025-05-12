@@ -9,7 +9,9 @@ class Staff extends Model
 {
     use SoftDeletes;
     protected $fillable = [
-        'user_id','FirstName','LastName','library_branch_id'
+        'user_id','FirstName','LastName','library_branch_id',
+        'phone_no','department',
+        'email' 
     ];
 
     public function user()
