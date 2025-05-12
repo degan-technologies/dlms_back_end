@@ -20,7 +20,6 @@ class CreateUsersTable extends Migration
             $table->timestamps();
             $table->softDeletes();
             
-
             $table->foreignId('library_branch_id')->constrained('library_branches')->restrictOnDelete()->cascadeOnUpdate();
         });
     }
