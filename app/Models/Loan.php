@@ -30,4 +30,9 @@ class Loan extends Model
     {
         return $this->belongsTo(LibraryBranch::class);
     }
+    
+    public function fine()
+    {
+        return $this->hasOne(Fine::class, 'loan_id');
+    }
 }

@@ -28,7 +28,7 @@ class BookItem extends Model
         'cover_image_url',
         'metadata',
         'language',
-        'library_branch_id',
+        'library_id',
         'shelf_id',
         'category_id',
         'publisher_id'
@@ -85,9 +85,9 @@ class BookItem extends Model
     /**
      * Get the library branch that owns this book item.
      */
-    public function libraryBranch(): BelongsTo
+    public function library(): BelongsTo
     {
-        return $this->belongsTo(LibraryBranch::class);
+        return $this->belongsTo(library::class);
     }
 
     /**

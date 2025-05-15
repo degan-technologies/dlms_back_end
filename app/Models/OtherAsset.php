@@ -58,4 +58,20 @@ class OtherAsset extends Model
     {
         return $this->belongsTo(AssetType::class);
     }
+
+    /**
+     * Get all bookmarks for this asset.
+     */
+    public function bookmarks()
+    {
+        return $this->morphMany(Bookmark::class, 'bookmarkable');
+    }
+
+    /**
+     * Get all notes for this asset.
+     */
+    public function notes()
+    {
+        return $this->morphMany(Note::class, 'notable');
+    }
 }

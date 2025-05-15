@@ -24,6 +24,23 @@ class LoanResource extends JsonResource
             'library_branch_id' => $this->library_branch_id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'book_item' => [
+                'id' => $this->bookItem->id,
+                'title' => $this->bookItem->title,
+                'isbn' => $this->bookItem->isbn,
+                'item_type' => $this->bookItem->item_type,
+                'availability_status' => $this->bookItem->availability_status,
+                'author' => $this->bookItem->author,
+                'publication_year' => $this->bookItem->publication_year,
+                'description' => $this->bookItem->description,
+                'cover_image_url' => $this->bookItem->cover_image_url,
+                'language' => $this->bookItem->language,
+            ],
+            'fine' => $this->fine ? [
+                'amount' => $this->fine->fine_amount,
+                'status' => $this->fine->payment_status,
+                'paid_at' => $this->fine->paid_at,
+            ] : null,
         ];
     }
 }

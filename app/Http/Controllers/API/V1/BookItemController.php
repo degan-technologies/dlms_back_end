@@ -21,15 +21,16 @@ class BookItemController extends Controller
     public function index(Request $request)
     {
         $query = BookItem::query();
-        
-        // Apply filters
-        if ($request->has('title')) {
-            $query->where('title', 'like', '%' . $request->title . '%');
-        }
-        
-        if ($request->has('author')) {
-            $query->where('author', 'like', '%' . $request->author . '%');
-        }
+       if ($request->filled('global')) {
+            $search = $request->input('global');
+            $query->where(function($q) use ($search) {
+                $q->where('isbn', 'like', "%{$search}%")
+                ->orWhere('item_type', 'like', "%{$search}%")
+                ->orWhereHas('category', function($catQuery) use ($search) {
+                    $catQuery->where('category_name', 'like', "%{$search}%");
+                });
+            });
+}
         
         if ($request->has('isbn')) {
             $query->where('isbn', 'like', '%' . $request->isbn . '%');
@@ -39,16 +40,22 @@ class BookItemController extends Controller
             $query->where('item_type', $request->item_type);
         }
         
-        if ($request->has('availability_status')) {
-            $query->where('availability_status', $request->availability_status);
+       if ($request->has('availability_status')) {
+            // Accept comma-separated list: e.g., 'Available,Checked Out'
+            $statuses = explode(',', $request->query('availability_status'));
+            $query->whereIn('availability_status', $statuses);
         }
         
         if ($request->has('library_branch_id')) {
             $query->where('library_branch_id', $request->library_branch_id);
         }
         
-        if ($request->has('category_id')) {
-            $query->where('category_id', $request->category_id);
+        if ($request->has('category')) {
+            // can be comma‐separated list
+            $names = explode(',', $request->query('category'));
+            $query->whereHas('category', function($q) use ($names) {
+                $q->whereIn('category_name', $names);
+            });
         }
         
         if ($request->has('publisher_id')) {
@@ -74,7 +81,7 @@ class BookItemController extends Controller
         }
         
         // Paginate results
-        $perPage = $request->query('per_page', 15);
+        $perPage = $request->query('per_page', 5);
         $bookItems = $query->paginate($perPage);
         
         return new BookItemCollection($bookItems);
