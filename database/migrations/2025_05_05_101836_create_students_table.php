@@ -14,8 +14,8 @@ class CreateStudentsTable extends Migration {
             $table->string('grade')->nullable();
             $table->string('section')->nullable();
             $table->string('gender');
-            // $table->foreignId('grade_id')->constrained("grades")->onDelete('cascade')->onUpdate("restrict"); 
-            // $table->foreignId('section_id')->constrained("sections")->onDelete('cascade')->onUpdate("restrict");
+            $table->string('phone_no')->nullable();
+            $table->string('email')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
