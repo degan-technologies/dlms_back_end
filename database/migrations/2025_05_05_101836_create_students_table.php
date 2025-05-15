@@ -8,14 +8,12 @@ class CreateStudentsTable extends Migration {
     public function up(): void {
         Schema::create('students', function (Blueprint $table) {
             $table->id();
-            $table->string('FirstName', 100);
-            $table->string('LastName', 100);
-            $table->string('Address', 255)->nullable();
+            $table->string('first_name', 100);
+            $table->string('last_name', 100);
+            $table->string('adress', 255)->nullable();
             $table->string('grade')->nullable();
             $table->string('section')->nullable();
             $table->string('gender');
-            $table->string('phone_no')->nullable();
-            $table->string('email')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
@@ -24,10 +22,6 @@ class CreateStudentsTable extends Migration {
                 ->onDelete('restrict')
                 ->onUpdate('cascade');
 
-            $table->foreignId('BranchID')
-                ->constrained('library_branches')
-                ->onDelete('restrict')
-                ->onUpdate('cascade');
         });
     }
 

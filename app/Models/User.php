@@ -8,8 +8,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
-{
+class User extends Authenticatable {
     use HasApiTokens;
     use SoftDeletes;
     use Notifiable;
@@ -29,43 +28,39 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    public function libraryBranch()
-    {
+    public function libraryBranch() {
         return $this->belongsTo(LibraryBranch::class);
     }
 
-    public function role()
-    {
+    public function role() {
         return $this->belongsTo(UserRole::class);
     }
 
 
-    public function bookmarks()
-    {
+    public function bookmarks() {
         return $this->hasMany(Bookmark::class);
     }
 
-    public function notes()
-    {
+    public function notes() {
         return $this->hasMany(Note::class);
     }
 
-    public function chatMessages(){
+    public function chatMessages() {
         return $this->hasMany(ChatMessage::class);
     }
 
-   
-    public function collections()
-    {
+
+    public function collections() {
         return $this->hasMany(Collection::class);
     }
-    public function recentlyVieweds(){
+    public function recentlyVieweds() {
         return $this->hasMany(RecentlyViewed::class);
     }
 
-    public function askLibrarians()
-    {
+    public function askLibrarians() {
         return $this->hasMany(AskLibrarian::class);
     }
-   
+    public function reservations() {
+        return $this->hasMany(Reservation::class);
+    }
 }

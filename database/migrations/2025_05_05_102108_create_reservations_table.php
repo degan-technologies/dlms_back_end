@@ -12,12 +12,14 @@ class CreateReservationsTable extends Migration
             $table->id();
             $table->timestamp('reservation_date')->useCurrent();
             $table->string('status',20)->default('pending');
+           
+            $table->timestamp('expiration_time')->nullable();
             $table->string('reservation_code', 50)->unique();
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreignId('student_id')
-                  ->constrained('students')
+            $table->foreignId('user_id')
+                  ->constrained('users')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
 

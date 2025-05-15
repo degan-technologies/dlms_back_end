@@ -12,28 +12,13 @@ class Student extends Model {
         'user_id',
         'first_name',
         'last_name',
-        'address',
-        // 'grade_id',
-        // 'section_id',
-        'sex',
-        'library_branch_id',
+        'adress',
+        'grade',
+        'section',
         'gender'
     ];
 
     public function user() {
         return $this->belongsTo(User::class, 'user_id');
-    }
-    public function libraryBranch() {
-        return $this->belongsTo(LibraryBranch::class);
-    }
-    public function grade() {
-        return $this->belongsTo(Grade::class);
-    }
-    public function section() {
-        return $this->belongsTo(Section::class);
-    }
-
-    public function reservations() {
-        return $this->hasMany(Reservation::class);
     }
 }

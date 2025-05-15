@@ -25,7 +25,7 @@ class BookItem extends Model {
         'cover_image_url',
         'language_id',
         'category_id',
-        'grade_id',
+        'grade',
         'library_id',
         'shelf_id',
         'subject_id',
@@ -54,9 +54,6 @@ class BookItem extends Model {
     }
 
 
-    public function grade(): BelongsTo {
-        return $this->belongsTo(Grade::class);
-    }
 
     public function language() {
         return $this->belongsTo(Language::class);

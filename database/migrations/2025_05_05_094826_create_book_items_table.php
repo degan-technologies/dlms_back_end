@@ -14,6 +14,7 @@ class CreateBookItemsTable extends Migration
             $table->string('author', 255)->nullable();
             $table->text('description')->nullable(); 
             $table->string('cover_image_url')->nullable(); 
+            $table->string('grade')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
@@ -37,11 +38,7 @@ class CreateBookItemsTable extends Migration
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
 
-            $table->foreignId('grade_id')
-                  ->nullable() 
-                  ->constrained('grades')
-                  ->onDelete('restrict')
-                  ->onUpdate('cascade');
+            
             $table->foreignId('subject_id')
                   ->nullable() 
                   ->constrained('subjects')

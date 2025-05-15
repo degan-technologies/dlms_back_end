@@ -15,8 +15,6 @@ class DatabaseSeeder extends Seeder
             // Base tables
             LibraryBranchSeeder::class,
             LibrarySeeder::class,
-            GradeSeeder::class,
-            SectionSeeder::class,
             CategorySeeder::class,
             ShelfSeeder::class,
             LanguageSeeder::class,
@@ -24,8 +22,6 @@ class DatabaseSeeder extends Seeder
             EbookTypeSeeder::class,
             NotificationTypeSeeder::class,
             RoleSeeder::class,
-            StudentSeeder::class,
-            StaffSeeder::class,
             
             // Books and related items
             BookItemSeeder::class,
