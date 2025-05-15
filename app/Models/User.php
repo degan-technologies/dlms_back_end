@@ -39,35 +39,33 @@ class User extends Authenticatable
         return $this->belongsTo(UserRole::class);
     }
 
-    /**
-     * Get all bookmarks created by the user.
-     */
+
     public function bookmarks()
     {
         return $this->hasMany(Bookmark::class);
     }
 
-    /**
-     * Get all notes created by the user.
-     */
     public function notes()
     {
         return $this->hasMany(Note::class);
     }
 
-    /**
-     * Get all reading lists created by the user.
-     */
-    public function readingLists()
-    {
-        return $this->hasMany(ReadingList::class);
+    public function chatMessages(){
+        return $this->hasMany(ChatMessage::class);
     }
 
-    /**
-     * Get all recently viewed resources by the user.
-     */
-    public function recentlyViewed()
+   
+    public function collections()
     {
+        return $this->hasMany(Collection::class);
+    }
+    public function recentlyVieweds(){
         return $this->hasMany(RecentlyViewed::class);
     }
+
+    public function askLibrarians()
+    {
+        return $this->hasMany(AskLibrarian::class);
+    }
+   
 }

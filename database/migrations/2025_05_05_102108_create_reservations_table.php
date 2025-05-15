@@ -10,8 +10,9 @@ class CreateReservationsTable extends Migration
     {
         Schema::create('reservations', function (Blueprint $table) {
             $table->id();
-            $table->timestamp('ReservationDate')->useCurrent();
-            $table->string('Status',20)->default('Pending');
+            $table->timestamp('reservation_date')->useCurrent();
+            $table->string('status',20)->default('pending');
+            $table->string('reservation_code', 50)->unique();
             $table->timestamps();
             $table->softDeletes();
 
@@ -20,13 +21,13 @@ class CreateReservationsTable extends Migration
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
 
-            $table->foreignId('book_item_id')
-                  ->constrained('book_items')
+            $table->foreignId('book_id')
+                  ->constrained('books')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
 
-            $table->foreignId('library_branch_id')
-                  ->constrained('library_branches')
+            $table->foreignId('library_id')
+                  ->constrained('libraries')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
         });

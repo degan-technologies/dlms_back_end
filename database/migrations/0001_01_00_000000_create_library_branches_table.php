@@ -11,10 +11,12 @@ class CreateLibraryBranchesTable extends Migration
         Schema::create('library_branches', function (Blueprint $table) {
             $table->id();
             $table->string('branch_name');
-            $table->string('address')->nullable();
-            $table->string('contact_number', 20)->nullable();
-            $table->string('email')->nullable();
-            $table->string('opening_hours')->nullable();
+            $table->string('address');
+            $table->string('location');
+            $table->string('contact_number', 20);
+            $table->string('email');
+            $table->json('library_time')->nullable();
+
            
             $table->timestamps();
             $table->softDeletes();

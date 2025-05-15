@@ -14,7 +14,7 @@ class BookItemCollection extends ResourceCollection
      */
     public function toArray($request)
     {
-        return [
+        $data = [
             'data' => $this->collection->transform(function ($item) {
                 // Helper function to process relations and remove timestamps
                 $processRelation = function ($relation) {
@@ -33,6 +33,29 @@ class BookItemCollection extends ResourceCollection
                     $libraryData['library_branch'] = $processRelation($item->library->libraryBranch);
                 }
                 
+                
+                // Process specific item details based on item type
+                $specificDetails = null;
+                if ($item->item_type === 'physical' && $item->book) {
+                    $specificDetails = $processRelation($item->book);
+                } elseif ($item->item_type === 'ebook' && $item->ebook) {
+                    $specificDetails = $processRelation($item->ebook);
+                } elseif ($item->item_type === 'other' && $item->otherAsset) {
+                    $specificDetails = $processRelation($item->otherAsset);
+                    // Include asset type information if available
+                    if ($item->otherAsset->assetType) {
+                        $specificDetails['asset_type'] = $processRelation($item->otherAsset->assetType);
+                    }
+                }
+                
+                // Get tags associated with the book item
+                $tags = [];
+                if ($item->tags) {
+                    $tags = $item->tags->map(function ($tag) use ($processRelation) {
+                        return $processRelation($tag);
+                    })->toArray();
+                }
+                
                 return [
                     'id' => $item->id,
                     'title' => $item->title,
@@ -43,21 +66,39 @@ class BookItemCollection extends ResourceCollection
                     'publication_year' => $item->publication_year,
                     'description' => $item->description,
                     'cover_image_url' => $item->cover_image_url,
+                    'is_new_arrival' => $item->is_new_arrival,
                     'language' => $item->language,
                     'library' => $libraryData,
                     'shelf' => $shelfData,
                     'category' => $processRelation($item->category),
                     'publisher' => $processRelation($item->publisher),
-                    
+                    'tags' => $tags,
+                    'specific_details' => $specificDetails,
+                    // Include the direct model references for complete access
+                    'book' => $item->item_type === 'physical' ? $processRelation($item->book) : null,
+                    'ebook' => $item->item_type === 'ebook' ? $processRelation($item->ebook) : null,
+                    'other_asset' => $item->item_type === 'other' ? $processRelation($item->otherAsset) : null,
                 ];
-            }),
-            'meta' => [
-                'total' => $this->total(),
-                'count' => $this->count(),
-                'per_page' => $this->perPage(),
-                'current_page' => $this->currentPage(),
-                'total_pages' => $this->lastPage()
-            ],
+            })
         ];
+        
+        // Add pagination meta data if the resource is paginated
+        if ($this->resource instanceof \Illuminate\Pagination\LengthAwarePaginator) {
+            $data['meta'] = [
+                'total' => $this->resource->total(),
+                'count' => $this->resource->count(),
+                'per_page' => $this->resource->perPage(),
+                'current_page' => $this->resource->currentPage(),
+                'total_pages' => $this->resource->lastPage()
+            ];
+        } else {
+            // For normal collections, provide basic meta data
+            $data['meta'] = [
+                'total' => $this->collection->count(),
+                'count' => $this->collection->count(),
+            ];
+        }
+        
+        return $data;
     }
 }

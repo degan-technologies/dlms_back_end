@@ -1,0 +1,25 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\NotificationType;
+use Illuminate\Database\Seeder;
+
+class NotificationTypeSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $types = [
+            ['type' => 'Due Reminder'],
+            ['type' => 'Return Alert'],
+        ];
+
+        foreach ($types as $type) {
+            NotificationType::firstOrCreate(
+                ['type' => $type['type']]
+            );
+        }
+
+        $this->command->info('Notification types seeded successfully.');
+    }
+}

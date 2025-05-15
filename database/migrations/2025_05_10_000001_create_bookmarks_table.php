@@ -12,14 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('bookmarks', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->morphs('bookmarkable'); // For EBook or OtherAsset
-            $table->integer('page_number')->nullable();
-            $table->string('position')->nullable(); // Can store coordinates or percentage
+            $table->id();            $table->foreignId('user_id')->constrained("users")->onDelete('restrict')->onUpdate('cascade');
+            $table->foreignId('e_book_id')->constrained("e_books")->onDelete('restrict')->onUpdate('cascade');
             $table->string('title')->nullable();
-            $table->text('description')->nullable();
-            $table->json('metadata')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

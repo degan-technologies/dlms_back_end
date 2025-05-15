@@ -14,12 +14,13 @@ class CreateFinesTable extends Migration
             $table->date('fine_date');
             $table->string('reason')->nullable();
             $table->date('payment_date')->nullable();
-            $table->string('payment_status',20)->default('Unpaid');
+            $table->boolean('payment_status')->default(false);
+            $table->string('receipt_path')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreignId('library_branch_id')
-                  ->constrained('library_branches')
+            $table->foreignId('library_id')
+                  ->constrained('libraries')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
 
@@ -32,6 +33,7 @@ class CreateFinesTable extends Migration
                   ->constrained('loans')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
+                  
         });
     }
 

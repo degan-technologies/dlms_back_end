@@ -4,25 +4,24 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateSectionsTable extends Migration
-{
-    public function up(): void
-    {
+return new class extends Migration {
+    /**
+     * Run the migrations.
+     */
+    public function up(): void {
         Schema::create('sections', function (Blueprint $table) {
             $table->id();
-            $table->string('section_name',100);
+            $table->string('name', 100)->unique();
+            $table->foreignId('grade_id')->constrained('grades')->onUpdate('cascade')->onDelete('restrict');
             $table->timestamps();
             $table->softDeletes();
-
-            $table->foreignId('library_branch_id')
-                  ->constrained()
-                  ->onDelete('restrict')
-                  ->onUpdate('cascade');
         });
     }
 
-    public function down(): void
-    {
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void {
         Schema::dropIfExists('sections');
     }
-}
+};

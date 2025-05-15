@@ -11,17 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('batches', function (Blueprint $table) {
+        Schema::create('languages', function (Blueprint $table) {
             $table->id();
-            $table->integer('grade')->index();
-            $table->string('str_section');
-            $table->integer('int_section');
-            $table->year('year');
-            $table->boolean('is_current')->default(true);
-            $table->foreignId('student_id')->constrained()->onDelete('restrict')->onUpdate('cascade');
+            $table->string('name');
+            $table->string('code', 10)->unique()->comment('ISO language code');
             $table->timestamps();
             $table->softDeletes();
         });
+        
     }
 
     /**
@@ -29,6 +26,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('batches');
+        Schema::table('book_items', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('language_id');
+        });
+        
+        Schema::dropIfExists('languages');
     }
 };

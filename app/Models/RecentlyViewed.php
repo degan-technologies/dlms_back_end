@@ -15,15 +15,10 @@ class RecentlyViewed extends Model
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
-     */
-    protected $fillable = [
+     */    protected $fillable = [
         'user_id',
-        'book_item_id',
+        'e_book_id',
         'last_viewed_at',
-        'view_count',
-        'last_page_viewed',
-        'view_duration',
-        'metadata',
     ];
 
     /**
@@ -33,10 +28,6 @@ class RecentlyViewed extends Model
      */
     protected $casts = [
         'last_viewed_at' => 'datetime',
-        'view_count' => 'integer',
-        'last_page_viewed' => 'integer',
-        'view_duration' => 'integer', // in seconds
-        'metadata' => 'array',
     ];
 
     /**
@@ -45,13 +36,19 @@ class RecentlyViewed extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
+    }    /**
      * Get the book item that was viewed.
      */
     public function bookItem(): BelongsTo
     {
         return $this->belongsTo(BookItem::class);
+    }
+    
+    /**
+     * Get the ebook that was viewed.
+     */
+    public function ebook(): BelongsTo
+    {
+        return $this->belongsTo(EBook::class, 'e_book_id');
     }
 }
