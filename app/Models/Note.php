@@ -15,16 +15,12 @@ class Note extends Model
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
-     */
-    protected $fillable = [
+     */    protected $fillable = [
         'user_id',
-        'notable_id',
-        'notable_type',
+        'e_book_id',
         'content',
         'page_number',
-        'position',
         'highlight_text',
-        'color',
         'metadata',
     ];
 
@@ -35,22 +31,13 @@ class Note extends Model
      */
     protected $casts = [
         'page_number' => 'integer',
-        'metadata' => 'array',
     ];
 
-    /**
-     * Get the user that owns the note.
-     */
-    public function user(): BelongsTo
+     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Get the parent notable model (EBook or OtherAsset).
-     */
-    public function notable()
+    }    public function ebook()
     {
-        return $this->morphTo();
+        return $this->belongsTo(EBook::class, 'e_book_id');
     }
 }

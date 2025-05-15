@@ -9,95 +9,49 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Book extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
-    /**
-     * The primary key for this model.
-     * We're using book_item_id as the primary key.
-     */
-    protected $primaryKey = 'book_item_id';
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
-        'book_item_id',
         'edition',
+        'isbn',
+        'title',
         'pages',
-        'cover_type',
-        'dimensions',
-        'weight_grams',
-        'barcode',
-        'shelf_location_detail',
-        'reference_only',
+        'is_borrowable',
+        'book_item_id',
+        'shelf_id',
+        'library_id',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array
-     */
+   
     protected $casts = [
-        'reference_only' => 'boolean',
-        'weight_grams' => 'integer',
+        'is_borrowable' => 'boolean',
         'pages' => 'integer',
     ];
 
-    /**
-     * Get the book item that owns the book.
-     */
+    
     public function bookItem(): BelongsTo
     {
-        return $this->belongsTo(BookItem::class, 'book_item_id');
+        return $this->belongsTo(BookItem::class);
     }
 
-    /**
-     * Get the publisher associated with the book through book item.
-     */
-    public function publisher()
+   
+    public function shelf(): BelongsTo
     {
-        return $this->bookItem->publisher();
+        return $this->belongsTo(Shelf::class, 'shelf_id');
     }
 
-    /**
-     * Get the category associated with the book through book item.
-     */
-    public function category()
+    public function library(): BelongsTo
     {
-        return $this->bookItem->category();
+        return $this->belongsTo(Library::class);
     }
 
-    /**
-     * Get all loans for this book.
-     */
-    public function loans()
+    public function bookCondition()
     {
-        return $this->bookItem->loans();
+        return $this->hasOne(BookCondition::class);
     }
-    
-    /**
-     * Get the title of the book from its parent BookItem.
-     */
-    public function getTitle()
+
+    public function reservations()
     {
-        return $this->bookItem->title;
-    }
-    
-    /**
-     * Get the author of the book from its parent BookItem.
-     */
-    public function getAuthor()
-    {
-        return $this->bookItem->author;
-    }
-    
-    /**
-     * Get the ISBN of the book from its parent BookItem.
-     */
-    public function getIsbn()
-    {
-        return $this->bookItem->isbn;
+        return $this->hasMany(Reservation::class);
     }
 }

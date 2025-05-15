@@ -12,15 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('notes', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->morphs('notable'); // For EBook or OtherAsset
+            $table->id();            $table->foreignId('user_id')->constrained("users")->onDelete('restrict')->onUpdate('cascade');
+            $table->foreignId('e_book_id')->constrained("e_books")->onDelete('restrict')->onUpdate('cascade');
             $table->text('content');
             $table->integer('page_number')->nullable();
-            $table->string('position')->nullable(); // Can store coordinates or percentage
-            $table->text('highlight_text')->nullable(); // Text that is highlighted
-            $table->string('color')->nullable(); // Color of the note/highlight
-            $table->json('metadata')->nullable();
+            $table->text('highlight_text')->nullable(); 
             $table->timestamps();
             $table->softDeletes();
         });

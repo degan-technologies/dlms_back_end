@@ -3,16 +3,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Category extends Model
 {
     use SoftDeletes;
-   
 
-    protected $fillable = ['category_name'];
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'slug',
+    ];
 
-    public function books()
+    public function bookItems(): HasMany
     {
-        return $this->hasMany(Book::class);
+        return $this->hasMany(BookItem::class);
     }
 }

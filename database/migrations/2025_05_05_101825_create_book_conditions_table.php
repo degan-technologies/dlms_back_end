@@ -8,12 +8,14 @@ class CreateBookConditionsTable extends Migration {
     public function up(): void {
         Schema::create('book_conditions', function (Blueprint $table) {
             $table->id();
-            $table->string('condition'); // e.g. New, Good, Damaged
+            $table->string('condition'); 
             $table->string('note')->nullable();
             $table->timestamps();
             $table->softDeletes();
-
-            $table->foreignId('book_item_id')->constrained('book_items')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreignId(('book_id'))
+                  ->constrained('books')
+                  ->onDelete('restrict')
+                  ->onUpdate('cascade');
         });
     }
 

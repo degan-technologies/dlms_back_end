@@ -11,21 +11,14 @@ class CreateStaffTable extends Migration
         Schema::create('staff', function (Blueprint $table) {
             $table->id();
            
-            $table->string('FirstName',100);
-            $table->string('LastName',100);
+            $table->string('first_name',100);
+            $table->string('last_name',100);
             $table->string('department')->nullable();
-            $table->string('phone_no')->nullable();
-            $table->string('email')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
             $table->foreignId('user_id')
                   ->constrained('users')
-                  ->onDelete('restrict')
-                  ->onUpdate('cascade');
-
-            $table->foreignId('library_branch_id')
-                  ->constrained('library_branches')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
         });

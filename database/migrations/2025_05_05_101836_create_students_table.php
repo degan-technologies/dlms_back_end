@@ -4,38 +4,28 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateStudentsTable extends Migration
-{
-    public function up(): void
-    {
+class CreateStudentsTable extends Migration {
+    public function up(): void {
         Schema::create('students', function (Blueprint $table) {
             $table->id();
-            $table->string('FirstName',100);
-            $table->string('LastName',100);
-            $table->string('Address',255)->nullable();
-            $table->string('grade');
+            $table->string('first_name', 100);
+            $table->string('last_name', 100);
+            $table->string('adress', 255)->nullable();
+            $table->string('grade')->nullable();
             $table->string('section')->nullable();
             $table->string('gender');
-            $table->string('phone_no')->nullable();
-            $table->string('email')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
             $table->foreignId('user_id')
-                  ->constrained('users')
-                  ->onDelete('restrict')
-                  ->onUpdate('cascade');
+                ->constrained('users')
+                ->onDelete('restrict')
+                ->onUpdate('cascade');
 
-            $table->foreignId('BranchID')
-                  ->constrained('library_branches')
-                  ->onDelete('restrict')
-                  ->onUpdate('cascade');
         });
     }
 
-    public function down(): void
-    {
+    public function down(): void {
         Schema::dropIfExists('students');
     }
 }
-

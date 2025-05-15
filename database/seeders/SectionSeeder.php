@@ -7,90 +7,58 @@ use Illuminate\Database\Seeder;
 
 class SectionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        // Common library sections organized by content type
-        $sections = [
-            // Main Branch (ID 1) Sections
-            [
-                'section_name' => 'Fiction',
-                'library_branch_id' => 1,
-            ],
-            [
-                'section_name' => 'Non-Fiction',
-                'library_branch_id' => 1,
-            ],
-            [
-                'section_name' => 'Reference',
-                'library_branch_id' => 1,
-            ],
-            [
-                'section_name' => 'Children',
-                'library_branch_id' => 1,
-            ],
-            [
-                'section_name' => 'Digital Media',
-                'library_branch_id' => 1,
-            ],
-            [
-                'section_name' => 'Periodicals',
-                'library_branch_id' => 1,
-            ],
-            [
-                'section_name' => 'Teen/Young Adult',
-                'library_branch_id' => 1,
-            ],
+        // For each grade (assuming grades 1-12 and college levels exist with IDs 1-18)
+        for ($gradeId = 1; $gradeId <= 12; $gradeId++) {
+            // Create sections A through D for each grade
+            $sections = [
+                ['name' => "Section A - Grade $gradeId", 'grade_id' => $gradeId],
+                ['name' => "Section B - Grade $gradeId", 'grade_id' => $gradeId],
+                ['name' => "Section C - Grade $gradeId", 'grade_id' => $gradeId],
+                ['name' => "Section D - Grade $gradeId", 'grade_id' => $gradeId],
+            ];
             
-            // North Branch (ID 2) Sections
-            [
-                'section_name' => 'Fiction',
-                'library_branch_id' => 2,
-            ],
-            [
-                'section_name' => 'Non-Fiction',
-                'library_branch_id' => 2,
-            ],
-            [
-                'section_name' => 'Children',
-                'library_branch_id' => 2,
-            ],
-            [
-                'section_name' => 'Local History',
-                'library_branch_id' => 2,
-            ],
-            
-            // South Branch (ID 3) Sections
-            [
-                'section_name' => 'Fiction',
-                'library_branch_id' => 3,
-            ],
-            [
-                'section_name' => 'Non-Fiction',
-                'library_branch_id' => 3,
-            ],
-            [
-                'section_name' => 'Children',
-                'library_branch_id' => 3,
-            ],
-            [
-                'section_name' => 'Multimedia',
-                'library_branch_id' => 3,
-            ],
-        ];
-
-        foreach ($sections as $section) {
-            Section::updateOrCreate(
-                [
-                    'section_name' => $section['section_name'],
-                    'library_branch_id' => $section['library_branch_id']
-                ],
-                $section
-            );
+            foreach ($sections as $section) {
+                Section::firstOrCreate(
+                    ['name' => $section['name']],
+                    $section
+                );
+            }
         }
+        
+        // For college levels (assuming grade IDs 13-18 for Freshman, Sophomore, Junior, Senior, Masters, PhD)
+        for ($gradeId = 13; $gradeId <= 18; $gradeId++) {
+            // Create departments for each college level
+            $departments = [
+                'Computer Science',
+                'Engineering',
+                'Medicine',
+                'Business',
+                'Arts'
+            ];
+            
+            foreach ($departments as $dept) {
+                $gradeName = match($gradeId) {
+                    13 => 'Freshman',
+                    14 => 'Sophomore',
+                    15 => 'Junior',
+                    16 => 'Senior',
+                    17 => 'Masters',
+                    18 => 'PhD',
+                    default => 'Unknown'
+                };
+                
+                Section::firstOrCreate(
+                    ['name' => "$dept - $gradeName"],
+                    [
+                        'name' => "$dept - $gradeName",
+                        'grade_id' => $gradeId
+                    ]
+                );
+            }
+        }
+
+        $this->command->info('Sections seeded successfully.');
     }
 }

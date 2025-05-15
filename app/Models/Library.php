@@ -9,7 +9,7 @@ class Library extends Model
 {
 
     use SoftDeletes;
-    protected $fillable = ['library_branch_id','name', 'address', 'contact_number',];
+    protected $fillable = ['library_branch_id','name',  'contact_number',];
 
     public function libraryBranch()
     {
@@ -28,5 +28,13 @@ class Library extends Model
     public function bookItems()
     {
         return $this->hasMany(BookItem::class);
+    }
+
+    public function askLibrarians(){
+        return $this->hasMany(AskLibrarian::class);
+    }
+
+    public function reservations(){
+        return $this->hasMany(Reservation::class);
     }
 }

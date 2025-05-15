@@ -2,52 +2,54 @@
 
 namespace Database\Seeders;
 
-use App\Models\EBook;
 use App\Models\BookItem;
+use App\Models\EBook;
+use App\Models\EbookType;
 use Illuminate\Database\Seeder;
-use Carbon\Carbon;
 
-class EBookSeeder extends Seeder
+class EbookSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        // Get all BookItems with item_type = ebook
-        $bookItems = BookItem::where('item_type', 'ebook')->get();
-        
-        foreach ($bookItems as $bookItem) {
-            // Create corresponding EBook records with specific ebook details
-            EBook::updateOrCreate(
-                ['book_item_id' => $bookItem->id],
-                [
-                    'book_item_id' => $bookItem->id,
-                    'file_url' => 'https://library.example.com/ebooks/' . $bookItem->id . '.pdf',
-                    'file_format' => array_rand(array_flip(['pdf', 'epub', 'mobi'])),
-                    'file_size_mb' => rand(5, 25) + (rand(0, 99) / 100), // Random size between 5-25 MB
-                    'pages' => rand(100, 600), // Random page count
-                    'is_downloadable' => rand(0, 1) === 1, // 50% chance of being downloadable
-                    'requires_authentication' => true, // Most ebooks require authentication
-                    'drm_type' => rand(0, 1) === 1 ? 'Adobe DRM' : null,
-                    'access_expires_at' => rand(0, 3) === 0 ? Carbon::now()->addMonths(rand(1, 12)) : null, // Some have expiration
-                    'max_downloads' => rand(0, 2) === 0 ? rand(1, 5) : null, // Some have download limits
-                    'reader_app' => $this->getRandomReaderApp(), // Using a helper method instead of array_flip with null
-                ]
-            );
-        }
-    }
+        $this->command->info('Seeding ebooks...');
 
-    /**
-     * Helper method to get a random reader app with possibility of null
-     * 
-     * @return string|null
-     */
-    private function getRandomReaderApp()
-    {
-        $apps = ['Adobe Digital Editions', 'Kindle', 'Libby', null];
-        return $apps[array_rand($apps)];
+        // Get necessary related models
+        $bookItems = BookItem::all();
+        $ebookTypes = EbookType::all();
+
+        // Check if we have the necessary data
+        if ($bookItems->isEmpty() || $ebookTypes->isEmpty()) {
+            $this->command->warn('Missing required data for Ebook seeder. Please seed related tables first.');
+            return;
+        }
+
+        // File formats
+        $formats = ['PDF', 'EPUB', 'MOBI', 'AZW', 'DOC'];
+
+        // For each book item, create an ebook version (for about 70% of books)
+        foreach ($bookItems as $bookItem) {
+            // 70% chance to create an ebook
+            if (rand(1, 10) <= 7) {
+                $format = $formats[array_rand($formats)];
+                $title = str_replace(' ', '_', $bookItem->title);
+                
+                EBook::firstOrCreate(
+                    [
+                        'book_item_id' => $bookItem->id,
+                    ],
+                    [
+                        'file_path' => "/storage/ebooks/{$title}.{$format}",
+                        'file_format' => $format,
+                        'file_name' => "{$title}.{$format}",
+                        'isbn' => 'E-' . rand(1000000000, 9999999999),                        'file_size_mb' => rand(1, 50) + (rand(0, 99) / 100),
+                        'pages' => rand(50, 600),
+                        'is_downloadable' => rand(0, 10) > 3, // 70% chance to be downloadable
+                        'e_book_type_id' => $ebookTypes->random()->id,
+                    ]
+                );
+            }
+        }
+        
+        $this->command->info('Ebooks seeded successfully.');
     }
 }

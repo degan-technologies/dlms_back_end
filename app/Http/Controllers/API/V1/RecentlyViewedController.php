@@ -20,27 +20,52 @@ class RecentlyViewedController extends Controller
      */
     public function index(Request $request)
     {
-        $query = RecentlyViewed::where('user_id', Auth::id());
+        $query = RecentlyViewed::query();
         
-        // Include relationships
-        $includes = $request->query('include', '');
-        $includes = array_filter(explode(',', $includes));
+        // Get items for the authenticated user
+        $query->where('user_id', Auth::id());
         
-        // Add eager loading for included relationships
-        if (!empty($includes)) {
-            $query->with($includes);
-        } else {
-            // Default to loading book items
-            $query->with('bookItem');
+        // Apply filters - basic search
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->whereHas('bookItem', function($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%')
+                  ->orWhere('author', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%');
+            });
         }
         
-        // Sort results
-        $sortField = $request->query('sort_by', 'last_viewed_at');
+        // Apply specific filters
+        if ($request->has('page_number')) {
+            $query->where('last_page_viewed', $request->page_number);
+        }
+        
+        if ($request->has('view_count')) {
+            $query->where('view_count', '>=', $request->view_count);
+        }
+        
+        // Always include core relationships
+        $defaultRelations = ['bookItem', 'bookItem.tags', 'bookItem.category'];
+        
+        // Additional relationships if requested in 'include' parameter
+        $includes = $request->query('include', '');
+        if (!empty($includes)) {
+            $includedRelations = array_filter(explode(',', $includes));
+            $relationsToLoad = array_merge($defaultRelations, $includedRelations);
+            $query->with($relationsToLoad);
+        } else {
+            $query->with($defaultRelations);
+        }
+        
+        // Apply sorting
+        $sortBy = $request->query('sort_by', 'last_viewed_at');
         $sortDirection = $request->query('sort_direction', 'desc');
         $allowedSorts = ['last_viewed_at', 'view_count', 'view_duration'];
         
-        if (in_array($sortField, $allowedSorts)) {
-            $query->orderBy($sortField, $sortDirection === 'desc' ? 'desc' : 'asc');
+        if (in_array($sortBy, $allowedSorts)) {
+            $query->orderBy($sortBy, $sortDirection === 'desc' ? 'desc' : 'asc');
+        } else {
+            $query->orderByDesc('last_viewed_at');
         }
         
         // Paginate results
