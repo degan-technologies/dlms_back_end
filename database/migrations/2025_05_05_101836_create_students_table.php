@@ -11,8 +11,6 @@ class CreateStudentsTable extends Migration {
             $table->string('first_name', 100);
             $table->string('last_name', 100);
             $table->string('adress', 255)->nullable();
-            $table->string('grade')->nullable();
-            $table->string('section')->nullable();
             $table->string('gender');
             $table->timestamps();
             $table->softDeletes();
@@ -21,7 +19,14 @@ class CreateStudentsTable extends Migration {
                 ->constrained('users')
                 ->onDelete('restrict')
                 ->onUpdate('cascade');
-
+             $table->foreignId('section_id')
+                ->constrained('sections')
+                ->onDelete('restrict')
+                ->onUpdate('cascade');
+            $table->foreignId('grade_id')
+                ->constrained('grades')
+                ->onDelete('restrict')
+                ->onUpdate('cascade');
         });
     }
 
