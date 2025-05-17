@@ -20,85 +20,28 @@ class Shelf extends Model
     protected $fillable = [
         'code',
         'location',
-        'capacity',
-        'is_active',
-        'section_id',
-        'library_branch_id'
+        'library_id'
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'capacity' => 'integer',
-        'is_active' => 'boolean',
-    ];
+    
 
-    /**
-     * Get the section that owns this shelf.
-     */
-    public function section(): BelongsTo
-    {
-        return $this->belongsTo(Section::class);
-    }
+    
 
     /**
      * Get the library branch that owns this shelf.
      */
-    public function libraryBranch(): BelongsTo
+    public function library(): BelongsTo
     {
-        return $this->belongsTo(LibraryBranch::class);
+        return $this->belongsTo(Library::class);
     }
 
     /**
      * Get the book items stored on this shelf.
      */
-    public function bookItems(): HasMany
+    public function books(): HasMany
     {
-        return $this->hasMany(BookItem::class);
+        return $this->hasMany(Book::class);
     }
     
-    /**
-     * Get the current occupancy of the shelf
-     */
-    public function getOccupancyAttribute()
-    {
-        return $this->bookItems()->count();
-    }
-    
-    /**
-     * Check if the shelf has available space
-     */
-    public function hasAvailableSpace(): bool
-    {
-        return $this->occupancy < $this->capacity;
-    }
-    
-    /**
-     * Get remaining capacity
-     */
-    public function getRemainingCapacityAttribute()
-    {
-        return max(0, $this->capacity - $this->occupancy);
-    }
-    
-    /**
-     * Get full location string including branch name
-     */
-    public function getFullLocationAttribute()
-    {
-        $location = $this->code;
-        
-        if ($this->location) {
-            $location .= ' - ' . $this->location;
-        }
-        
-        if ($this->libraryBranch) {
-            $location .= ' (' . $this->libraryBranch->branch_name . ')';
-        }
-        
-        return $location;
-    }
+
 }

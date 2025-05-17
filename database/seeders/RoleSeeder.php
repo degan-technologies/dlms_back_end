@@ -5,35 +5,57 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use App\Models\User;
+use App\Models\Student;
+use App\Models\Staff;
 use Illuminate\Support\Facades\Hash;
 
 class RoleSeeder extends Seeder {
     public function run(): void {
+        $roles = ['superadmin', 'admin', 'librarian', 'teacher', 'student'];
+
         // Create roles
-        $roles = ['superadmin', 'admin', 'librarian', 'staff', 'student'];
         foreach ($roles as $role) {
             Role::firstOrCreate(['name' => $role]);
         }
 
-        // Create users for all roles
         foreach ($roles as $role) {
-            // Use specific email for superadmin, and role-based emails for others
-
-            $sampleUser = User::firstOrCreate(
+            $user = User::firstOrCreate(
                 ['username' => $role],
                 [
                     'email' => $role . '@gmail.com',
                     'password' => Hash::make('password'),
-                    'library_branch_id' => 1, // Update as appropriate
+                    'library_branch_id' => 1,
                 ]
             );
 
-            // Ensure role is assigned only once
-            if (!$sampleUser->hasRole($role)) {
-                $sampleUser->assignRole($role);
+            if (!$user->hasRole($role)) {
+                $user->assignRole($role);
+            }
+
+            if ($role === 'student') {
+                // Insert into students table
+                Student::firstOrCreate([
+                    'user_id' => $user->id,
+                ], [
+                    'first_name' => ucfirst($role),
+                    'last_name' => 'User',
+                    'gender' => 'male',
+                    'adress' => '123 Main St',
+                    'grade' => '10',
+                    'section' => 'A',
+                ]);
+            } else {
+                // Insert into staff table
+                Staff::firstOrCreate([
+                    'user_id' => $user->id,
+                ], [
+                    'first_name' => ucfirst($role),
+                    'last_name' => 'User',
+                    'department' => ucfirst($role) . ' Department',
+                ]);
             }
         }
 
-        $this->command->info('Roles and users seeded successfully.');
+        $this->command->info('Roles, users, students, and staff seeded successfully.');
     }
 }

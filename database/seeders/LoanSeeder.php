@@ -2,48 +2,65 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\Book;
+use App\Models\Library;
 use App\Models\Loan;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class LoanSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run()
+    public function run(): void
     {
-        $loans = [
-            [
-                'student_id' => 1, // Ensure this user exists in the 'users' table
-                'book_item_id' => 1, // Ensure this book item exists in the 'book_items' table
-                'borrow_date' => '2025-05-01',
-                'due_date' => '2025-05-15',
-                'return_date' => null,
-                'library_branch_id' => 1, // Ensure this branch exists in the 'library_branches' table
-            ],
-            [
-                'student_id' => 2, // Ensure this user exists in the 'users' table
-                'book_item_id' => 2, // Ensure this book item exists in the 'book_items' table
-                'borrow_date' => '2025-05-02',
-                'due_date' => '2025-05-16',
-                'return_date' => '2025-05-10',
-                'library_branch_id' => 1, // Ensure this branch exists in the 'library_branches' table
-            ],
-            [
-                'student_id' => 3, // Ensure this user exists in the 'users' table
-                'book_item_id' => 3, // Ensure this book item exists in the 'book_items' table
-                'borrow_date' => '2025-05-03',
-                'due_date' => '2025-05-17',
-                'return_date' => null,
-                'library_branch_id' => 2, // Ensure this branch exists in the 'library_branches' table
-            ],
-        ];
+        $this->command->info('Seeding book loans...');
 
-        foreach ($loans as $loan) {
-            Loan::updateOrCreate([
-                'student_id' => $loan['student_id'],
-                'book_item_id' => $loan['book_item_id'],
-            ], $loan);
+        // Get necessary related models
+        $users = User::all();
+        $books = Book::where('is_borrowable', true)->get();
+        $libraries = Library::all();
+
+        // Check if we have the necessary data
+        if ($users->isEmpty() || $books->isEmpty() || $libraries->isEmpty()) {
+            $this->command->warn('Missing required data for Loan seeder. Please seed related tables first.');
+            return;
         }
+
+        // Create loans
+        $eligibleUsers = $users->filter(function ($user) {
+            return $user->hasRole('student') || $user->hasRole('teacher');
+        });
+
+        if ($eligibleUsers->isEmpty()) {
+            $eligibleUsers = $users; // Fallback to all users if no eligible users
+        }
+
+        foreach ($eligibleUsers as $user) {
+            $loanCount = rand(0, 3);
+            $userBooks = $books->random(min($loanCount, $books->count()));
+
+            foreach ($userBooks as $book) {
+                $loanStatus = rand(1, 3);
+
+                $borrowDate = Carbon::now()->subDays(rand(5, 30));
+                $dueDate = (clone $borrowDate)->addDays(14);
+
+                $returnedDate = null;
+                if ($loanStatus == 2) {
+                    $returnedDate = (clone $borrowDate)->addDays(rand(1, 10));
+                }
+
+                Loan::create([
+                    'user_id' => $user->id,
+                    'book_id' => $book->id,
+                    'library_id' => $libraries->random()->id,
+                    'borrow_date' => $borrowDate->toDateString(),
+                    'due_date' => $dueDate->toDateString(),
+                    'returned_date' => $returnedDate?->toDateString(),
+                ]);
+            }
+        }
+
+        $this->command->info('Book loans seeded successfully.');
     }
 }

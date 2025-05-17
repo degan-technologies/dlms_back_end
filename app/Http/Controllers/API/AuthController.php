@@ -18,11 +18,15 @@ use Symfony\Component\HttpFoundation\Response;
 class AuthController extends Controller
 {
     /**
-     * Register a new user
+     * Register a new user  
      *
      * @param RegisterRequest $request
      * @return JsonResponse
      */
+    public function allUsers()
+    {
+        return response()->json(User::all());
+    }
     public function register(RegisterRequest $request): JsonResponse
     {
         // Get validated data
@@ -35,8 +39,8 @@ class AuthController extends Controller
             'phone_no' => $validated['phone_no'],
             'password' => Hash::make($validated['password']),
             'library_branch_id' => $validated['library_branch_id'],
-            'first_name' => $validated['first_name'],
-            'last_name' => $validated['last_name'],
+            // 'first_name' => $validated['first_name'],
+            // 'last_name' => $validated['last_name'],
         ]);
 
         // Assign the role to the user
@@ -238,5 +242,31 @@ class AuthController extends Controller
             'token' => $token,
         ], Response::HTTP_OK)
             ->cookie('access_token', $token, 60 * 24, '/', null, true, true, false, 'Strict');
+    }
+
+    /**
+     * Update authenticated user's profile
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updateUser(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'username' => 'sometimes|string|max:255|unique:users,username,' . $user->id,
+            'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
+            'phone_no' => 'sometimes|nullable|string|max:20',
+            'library_branch_id' => 'sometimes|exists:library_branches,id',
+            // Add other fields as needed
+        ]);
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'User updated successfully',
+            'user' => new UserResource($user->fresh()),
+        ], \Symfony\Component\HttpFoundation\Response::HTTP_OK);
     }
 }

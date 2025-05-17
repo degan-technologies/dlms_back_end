@@ -20,8 +20,7 @@ class NoteController extends Controller
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+     */    public function index(Request $request)
     {
         $query = Note::where('user_id', Auth::id());
         
@@ -40,6 +39,42 @@ class NoteController extends Controller
             $query->where('notable_id', $request->notable_id);
         }
         
+        // Search functionality
+        if ($request->has('search')) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('content', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('highlight_text', 'like', '%' . $searchTerm . '%');
+            });
+        }
+        
+        // Advanced filtering options
+        if ($request->has('color')) {
+            $query->where('color', $request->color);
+        }
+        
+        
+        
+        
+        
+        if ($request->has('date_from')) {
+            try {
+                $date = new \DateTime($request->date_from);
+                $query->where('created_at', '>=', $date->format('Y-m-d'));
+            } catch (\Exception $e) {
+                // Invalid date format, ignore this filter
+            }
+        }
+        
+        if ($request->has('date_to')) {
+            try {
+                $date = new \DateTime($request->date_to);
+                $query->where('created_at', '<=', $date->format('Y-m-d') . ' 23:59:59');
+            } catch (\Exception $e) {
+                // Invalid date format, ignore this filter
+            }
+        }
+        
         // Include relationships
         $includes = $request->query('include', '');
         $includes = array_filter(explode(',', $includes));
@@ -50,17 +85,11 @@ class NoteController extends Controller
         }
         
         // Sort results
-        $sortField = $request->query('sort_by', 'created_at');
         $sortDirection = $request->query('sort_direction', 'desc');
-        $allowedSorts = ['created_at', 'page_number'];
-        
-        if (in_array($sortField, $allowedSorts)) {
-            $query->orderBy($sortField, $sortDirection === 'desc' ? 'desc' : 'asc');
-        }
-        
-        // Paginate results
+        $query->orderBy('created_at', $sortDirection === 'desc' ? 'desc' : 'asc');
+          // Paginate results
         $perPage = $request->query('per_page', 15);
-        $notes = $query->paginate($perPage);
+        $notes = $query->paginate($perPage)->withQueryString();
         
         return new NoteCollection($notes);
     }
@@ -140,8 +169,7 @@ class NoteController extends Controller
      *
      * @param  \App\Models\Note  $note
      * @return \Illuminate\Http\Response
-     */
-    public function destroy(Note $note)
+     */    public function destroy(Note $note)
     {
         // Check if the note belongs to the authenticated user
         if ($note->user_id !== Auth::id()) {
@@ -151,5 +179,72 @@ class NoteController extends Controller
         $note->delete();
         
         return response()->json(['message' => 'Note deleted successfully'], Response::HTTP_OK);
+    }
+
+    /**
+     * Search for notes based on content and other criteria.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */    public function search(Request $request)
+    {
+        $request->validate([
+            'query' => 'required|string|min:2',
+        ]);
+
+        $query = Note::where('user_id', Auth::id());
+        
+        // Search in content and highlight_text
+        $searchTerm = $request->input('query');
+        $query->where(function($q) use ($searchTerm) {
+            $q->where('content', 'like', '%' . $searchTerm . '%')
+              ->orWhere('highlight_text', 'like', '%' . $searchTerm . '%');
+        });
+        
+        // Apply additional filters if provided
+        if ($request->has('type')) {
+            $type = $request->type;
+            if ($type === 'ebook') {
+                $query->where('notable_type', EBook::class);
+            } elseif ($type === 'other_asset') {
+                $query->where('notable_type', OtherAsset::class);
+            }
+        }
+        
+        if ($request->has('notable_id')) {
+            $query->where('notable_id', $request->notable_id);
+        }
+
+        if ($request->has('color')) {
+            $query->where('color', $request->color);
+        }
+          // Optional eager loading of relationships
+        $includes = $request->query('include', '');
+        $includes = array_filter(explode(',', $includes));
+        
+        if (!empty($includes)) {
+            $query->with($includes);
+        } else {
+            // Default to loading the notable relationship
+            $query->with('notable');
+        }
+        
+        // Sort results
+        $sortField = $request->query('sort_by', 'created_at');
+        $sortDirection = $request->query('sort_direction', 'desc');
+        $allowedSorts = ['created_at', 'updated_at', 'page_number'];
+        
+        if (in_array($sortField, $allowedSorts)) {
+            $query->orderBy($sortField, $sortDirection === 'desc' ? 'desc' : 'asc');
+        } else {
+            // Default sorting
+            $query->orderBy('created_at', 'desc');
+        }
+        
+        // Paginate search results
+        $perPage = $request->query('per_page', 15);
+        $notes = $query->paginate($perPage)->withQueryString();
+        
+        return new NoteCollection($notes);
     }
 }

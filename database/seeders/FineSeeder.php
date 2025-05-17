@@ -2,62 +2,99 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Fine;
+use App\Models\Library;
+use App\Models\Loan;
+use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class FineSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run()
+    public function run(): void
     {
-        $fines = [
-            [
-                'library_branch_id' => 1, // Ensure this branch exists in the 'library_branches' table
-                'user_id' => 1,          // Ensure this user exists in the 'users' table
-                'loan_id' => 1,          // Ensure this loan exists in the 'loans' table
-                'fine_amount' => 50.00,
-                'fine_date' => '2025-05-01',
-                'reason' => 'Late return',
-                'payment_date' => null,
-                'payment_status' => 'Unpaid',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'library_branch_id' => 1,
-                'user_id' => 2,
-                'loan_id' => 2, // Ensure this loan exists in the 'loans' table
-                'fine_amount' => 30.00,
-                'fine_date' => '2025-05-02',
-                'reason' => 'Lost book',
-                'payment_date' => null,
-                'payment_status' => 'Unpaid',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'library_branch_id' => 2,
-                'user_id' => 3,
-                'loan_id' => 3, // Ensure this loan exists in the 'loans' table
-                'fine_amount' => 20.00,
-                'fine_date' => '2025-05-03',
-                'reason' => 'Damaged book',
-                'payment_date' => null,
-                'payment_status' => 'Unpaid',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ];
+        $this->command->info('Seeding fines...');
 
-        foreach ($fines as $fine) {
-            if (\App\Models\Loan::find($fine['loan_id'])) {
-                Fine::updateOrCreate([
-                    'loan_id' => $fine['loan_id'],
-                ], $fine);
+        // Get all overdue loans (where due_date has passed and returned_date is null)
+        $currentDate = Carbon::now();
+        $overdueLoans = Loan::whereNull('returned_date')
+                          ->where('due_date', '<', $currentDate)
+                          ->get();
+        
+        // Also get some returned loans that were late
+        $lateReturnedLoans = Loan::whereNotNull('returned_date')
+                              ->whereRaw('returned_date > due_date')
+                              ->get();
+
+        $allLoansForFines = $overdueLoans->merge($lateReturnedLoans);
+        
+        if ($allLoansForFines->isEmpty()) {
+            $this->command->warn('No overdue or late loans found. Please run LoanSeeder first.');
+            return;
+        }
+
+        // Get libraries
+        $libraries = Library::all();
+        
+        if ($libraries->isEmpty()) {
+            $this->command->warn('No libraries found. Please seed library data first.');
+            return;
+        }
+
+        // Create fines for overdue books
+        foreach ($allLoansForFines as $loan) {
+            // Calculate days overdue
+            if ($loan->returned_date) {
+                // For returned books, calculate based on actual return date
+                $daysLate = Carbon::parse($loan->due_date)->diffInDays(Carbon::parse($loan->returned_date));
             } else {
+                // For books not returned yet, calculate based on current date
+                $daysLate = Carbon::parse($loan->due_date)->diffInDays($currentDate);
+            }
+            
+            // Only create fine if actually late (due_date < returned_date or current date)
+            if ($daysLate > 0) {
+                // Fine amount: base fine ($5) + additional per day late ($0.50 per day)
+                $fineAmount = 5 + ($daysLate * 0.5);
+                
+                // 30% chance the fine has been paid for returned books
+                $isPaid = $loan->returned_date && rand(1, 10) <= 3;
+                $paymentDate = $isPaid ? Carbon::parse($loan->returned_date)->addDays(rand(1, 5)) : null;
+                
+                Fine::create([
+                    'fine_amount' => $fineAmount,
+                    'fine_date' => $loan->due_date, // Fine created on due date
+                    'reason' => "Overdue book: {$daysLate} days late",
+                    'payment_date' => $paymentDate,
+                    'payment_status' => $isPaid,
+                    'receipt_path' => $isPaid ? "/receipts/fine_" . $loan->id . "_" . now()->timestamp . ".pdf" : null,
+                    'library_id' => $loan->library_id,
+                    'user_id' => $loan->user_id,
+                    'loan_id' => $loan->id,
+                ]);
             }
         }
+        
+        // Create a few additional random fines for damaged books
+        $randomLoans = Loan::inRandomOrder()->limit(5)->get();
+        
+        foreach ($randomLoans as $loan) {
+            // 50% chance the fine has been paid
+            $isPaid = rand(0, 1) == 1;
+            $paymentDate = $isPaid ? Carbon::now()->subDays(rand(1, 30)) : null;
+            
+            Fine::create([
+                'fine_amount' => rand(10, 50),
+                'fine_date' => Carbon::now()->subDays(rand(5, 60)),
+                'reason' => "Damaged book",
+                'payment_date' => $paymentDate,
+                'payment_status' => $isPaid,
+                'receipt_path' => $isPaid ? "/receipts/damage_" . $loan->id . "_" . now()->timestamp . ".pdf" : null,
+                'library_id' => $loan->library_id,
+                'user_id' => $loan->user_id,
+                'loan_id' => $loan->id,
+            ]);
+        }
+        
+        $this->command->info('Fines seeded successfully.');
     }
 }

@@ -21,8 +21,7 @@ class BookController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Book::query()
-            ->join('book_items', 'books.book_item_id', '=', 'book_items.id');
+        $query = Book::query();
         
         // Apply filters
         if ($request->has('title')) {

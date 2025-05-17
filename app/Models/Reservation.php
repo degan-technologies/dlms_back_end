@@ -8,23 +8,29 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Reservation extends Model
 {
     use SoftDeletes;
-    protected $primaryKey = 'ReservationID';
+
     protected $fillable = [
-        'MemberID','BookItemID',
-        'ReservationDate','library_branch_id','Status'
+        'reservation_date',
+        'status',
+        'expiration_time',
+        'reservation_code',
+        'user_id',
+        'book_id',
+        'library_id',
     ];
 
-    public function member()
+    public function user()
     {
-        return $this->belongsTo(Member::class,'MemberID','MemberID');
+        return $this->belongsTo(User::class);
     }
-    public function bookItem()
+
+    public function book()
     {
-        return $this->belongsTo(BookItem::class,'BookItemID','BookItemID');
+        return $this->belongsTo(Book::class);
     }
-    public function branch()
+
+    public function library()
     {
-        return $this->belongsTo(LibraryBranch::class,'library_branch_id');
+        return $this->belongsTo(Library::class);
     }
 }
-
