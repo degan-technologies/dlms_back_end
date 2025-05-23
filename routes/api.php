@@ -1,17 +1,24 @@
+
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\LibraryController;
+use App\Http\Controllers\API\SectionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Bookmark\BookmarkController;
 use App\Http\Controllers\Note\NoteController;
 use App\Http\Controllers\ChatMessage\ChatMessageController;
-use App\Http\Controllers\RecentlyViewedController;
+
 use App\Http\Controllers\Collection\CollectionController;
 use App\Http\Controllers\BookItem\BookItemController;
 use App\Http\Controllers\Book\BookController;
 use App\Http\Controllers\EBook\EBookController;
 use App\Http\Controllers\Constant\ConstantController;
-
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LoanController;
+use App\Http\Controllers\RecentlyViewed\RecentlyViewedController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\StudentController;
 
 // 1. Public Routes
 Route::post('login', [AuthController::class, 'login']);
@@ -37,12 +44,26 @@ Route::prefix('constants')->group(function() {
 
 // 2. Authenticated User Routes
 Route::middleware('auth:api')->group(function () {
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::get('category',[DashboardController::class,'index']);
+    Route::get('/users', [AuthController::class, 'allUsers']);
+    Route::put('/user', [AuthController::class, 'updateUser']);
+    Route::post('/user', [AuthController::class, 'changePassword']);
+    Route::get('/loan-history', [LoanController::class, 'history']);
+
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('book-items', [BookItemController::class, 'index']);
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    
+    Route::get('/reset-password/{token}', function ($token) {
+        return view('auth.reset-password', ['token' => $token, 'email' => request('email')]);
+    })->name('password.reset');
+
     // Bookmarks
     Route::apiResource('bookmarks', BookmarkController::class);
-    // Notes
-    Route::apiResource('notes', NoteController::class);
+    // Notesa
+        Route::apiResource('notes', NoteController::class);
     // Chat Messages
     Route::apiResource('chat-messages', ChatMessageController::class);
     // Recently Viewed
@@ -112,4 +133,15 @@ Route::middleware('auth:api')->group(function () {
         // Route::apiResource('admins', AdminController::class);
         // ...inherits all admin privileges
     });
+
+    //8.both admin and super admin
+    Route::middleware('role:superadmin|admin')->group(function () {
+        Route::Resource('/libraries', LibraryController::class);
+        Route::apiResource('/sections', SectionController::class);
+        Route::resource('staff', StaffController::class);
+        Route::post('staff/bulk', [StaffController::class, 'storeBulk']);
+        Route::resource('students', StudentController::class);
+        Route::post('/students/batch', [StudentController::class, 'batchStore']);
+    
+});
 });
