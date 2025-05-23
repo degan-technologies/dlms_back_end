@@ -71,7 +71,7 @@ class CollectionController extends Controller
             // Special case for nested relationships            if (in_array('ebooks.bookItem', $relationships)) {
                 $query->with('ebooks.bookItem');
             }
-        }
+        
         
         // Custom sorting
         if ($request->has('sort_by') && in_array($request->sort_by, ['created_at', 'updated_at', 'name'])) {
