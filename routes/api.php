@@ -21,7 +21,6 @@ use App\Http\Controllers\EBook\EBookController;
 use App\Http\Controllers\EBook\EBookFileController;
 use App\Http\Controllers\Constant\ConstantController;
 use App\Http\Controllers\DashboardStatsController;
-use App\Http\Controllers\RecentlyViewed\RecentlyViewedController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StudentController;use App\Http\Controllers\Language\LanguageController;
 use App\Http\Controllers\SubjectController;
