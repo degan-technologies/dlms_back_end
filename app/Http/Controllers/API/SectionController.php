@@ -28,7 +28,7 @@ class SectionController extends Controller
         $this->authorizeSuperAdminOrAdmin();
 
         $request->validate([
-            'SectionName' => 'required|string|max:100',
+            'section_name' => 'required|string|max:100',
             'library_branch_id' => 'required|exists:library_branches,id',
         ]);
 
@@ -67,10 +67,30 @@ class SectionController extends Controller
 
         return response()->json(['message' => 'Section deleted successfully.']);
     }
+    public function bulkDelete(Request $request)
+    {
+        $this->authorizeSuperAdminOrAdmin();
+
+        $ids = $request->input('ids');
+
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json(['message' => 'Invalid or no IDs provided.'], 400);
+        }
+
+        $validIds = Section::whereIn('id', $ids)->pluck('id')->toArray();
+
+        if (empty($validIds)) {
+            return response()->json(['message' => 'No valid IDs found.'], 400);
+        }
+
+        Section::destroy($validIds);
+
+        return response()->json(['message' => 'Sections deleted successfully.']);
+    }
 
     protected function authorizeSuperAdminOrAdmin()
     {
-        if (!(Auth::user()->hasRole('admin') || Auth::user()->hasRole('super-admin'))) {
+        if (!(Auth::user()->hasRole('admin') || Auth::user()->hasRole('superadmin'))) {
             abort(403, 'Unauthorized. Admin or Super-admin only.');
         }
     }

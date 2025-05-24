@@ -23,7 +23,7 @@ class EBook extends Model {
      */
     protected $fillable = [
         'book_item_id',
-        'file_path', 
+        'file_path',
         'file_format',
         'file_name',
         'isbn',
@@ -31,6 +31,7 @@ class EBook extends Model {
         'pages',
         'is_downloadable',
         'e_book_type_id',
+        'user_id',
     ];
 
     protected $casts = [
@@ -39,6 +40,10 @@ class EBook extends Model {
         'is_downloadable' => 'boolean',
 
     ];
+
+    public function uploader(): BelongsTo{
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
 
     public function ebookType() {
@@ -54,6 +59,7 @@ class EBook extends Model {
         return $this->belongsToMany(Collection::class, 'collection_ebook', 'e_book_id', 'collection_id');
     }
 
+
     public function bookmarks() {
         return $this->hasMany(Bookmark::class);
     }
@@ -63,5 +69,9 @@ class EBook extends Model {
     public function chatMessages() {
         return $this->hasMany(ChatMessage::class);
     }
- 
+
+    public function users(){
+        return $this ->hasMany(User::class);
+    }
+
 }

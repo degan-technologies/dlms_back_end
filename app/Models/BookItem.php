@@ -29,6 +29,7 @@ class BookItem extends Model {
         'shelf_id',
         'subject_id',
         'grade_id',
+        'user_id',
     ];
 
     public function books() {
