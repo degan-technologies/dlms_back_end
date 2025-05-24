@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\ReadingPerformanceController;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Section extends Model {
     use SoftDeletes;
-    
+
     protected $fillable = [
         'name',
         'grade_id',
@@ -18,7 +19,7 @@ class Section extends Model {
     }
 
     public function students() {
-        return $this->hasMany(User::class);
+        return $this->hasMany(Student::class);
     }
 
 
@@ -26,4 +27,10 @@ class Section extends Model {
     public function bookItems() {
         return $this->hasMany(BookItem::class);
     }
+    public function readingPerformances()
+{
+    return $this->hasMany(ReadingPerformanceController::class);
+}
+
+
 }

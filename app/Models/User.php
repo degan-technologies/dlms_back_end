@@ -29,6 +29,12 @@ class User extends Authenticatable {
         'remember_token',
     ];
 
+    public function grade()
+{
+    return $this->belongsTo(Grade::class);
+}
+
+
     public function libraryBranch() {
         return $this->belongsTo(LibraryBranch::class);
     }
@@ -75,4 +81,11 @@ public function unreadNotifications()
 {
     return $this->notifications()->whereNull('read_at');
 }
+ public function section(){
+        return $this->belongsTo(Section::class);
+    }
+
+    public function ebookReadings() {
+        return $this->hasMany(EbookReading::class);
+    }
 }

@@ -21,7 +21,7 @@ class LibraryBranchResource extends JsonResource
             'contactNumber' => $this->contact_number,
             'email' => $this->email,
             'openingHours' => $this->opening_hours,
-            'libraryId' => $this->library_id,
+            'location' => $this->location,
             'createdAt' => $this->created_at?->toDateTimeString(),
             'updatedAt' => $this->updated_at?->toDateTimeString(),
         ];

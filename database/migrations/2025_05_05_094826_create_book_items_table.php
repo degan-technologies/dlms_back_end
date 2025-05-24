@@ -12,10 +12,11 @@ class CreateBookItemsTable extends Migration
             $table->id();
             $table->string('title', 255);
             $table->string('author', 255)->nullable();
-            $table->text('description')->nullable(); 
-            $table->string('cover_image_url')->nullable(); 
+            $table->text('description')->nullable();
+            $table->string('cover_image_url')->nullable();
             $table->timestamps();
             $table->softDeletes();
+
 
             // Foreign keys
             $table->foreignId('library_id')
@@ -27,7 +28,7 @@ class CreateBookItemsTable extends Migration
                   ->constrained('shelves')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
-                  
+
             $table->foreignId('category_id')
                   ->constrained('categories')
                   ->onDelete('restrict')
@@ -37,15 +38,20 @@ class CreateBookItemsTable extends Migration
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
 
-            
+
             $table->foreignId('subject_id')
-                  ->nullable() 
+                  ->nullable()
                   ->constrained('subjects')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
             $table->foreignId('grade_id')
-                  ->nullable() 
+                  ->nullable()
                   ->constrained('grades')
+                  ->onDelete('restrict')
+                  ->onUpdate('cascade');
+            $table->foreignId('user_id')
+                  ->nullable()
+                  ->constrained('users')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
         });
@@ -56,4 +62,3 @@ class CreateBookItemsTable extends Migration
         Schema::dropIfExists('book_items');
     }
 }
-

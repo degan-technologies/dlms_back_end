@@ -11,10 +11,27 @@ use Illuminate\Support\Facades\Auth;
 class LibraryController extends Controller
 {
     // List all libraries (available to any authenticated user)
-    public function index()
-    {
-        return response()->json(Library::all());
+    public function index(Request $request)
+{
+    $query = Library::query();
+
+    if ($search = $request->input('search')) {
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', '%' . $search . '%')
+              ->orWhere('contact_number', 'like', '%' . $search . '%');
+        });
     }
+
+    if ($request->has('library_branch_id')) {
+        $query->where('library_branch_id', $request->input('library_branch_id'));
+    }
+
+    $libraries = $query->get();
+
+    return response()->json(LibraryResource::collection($libraries));
+}
+
+
 
     // Show single library (available to any authenticated user)
     public function show($id)
@@ -25,22 +42,27 @@ class LibraryController extends Controller
 
     // Store a new library (restricted to super-admin)
     public function store(Request $request)
-    {
-        $this->authorizeSuperAdminOrAdmin();
+{
+    $this->authorizeSuperAdminOrAdmin();
 
-        $request->validate([
-            'name' => 'required|string|unique:libraries',
-            'address' => 'required|string',
-            'contact_number' => 'required|string',
-        ]);
+    $request->validate([
+        'name' => 'required|string|unique:libraries',
+        'contact_number' => 'required|string',
+        'library_branch_id' => 'required|exists:library_branches,id',
+    ]);
 
-        $library = Library::create($request->all());
+    $library = Library::create([
+        'name' => $request->name,
+        'contact_number' => $request->contact_number,
+        'library_branch_id' => $request->library_branch_id,
+    ]);
 
-        return response()->json([
-            'message' => 'Library created successfully.',
-            'library' => new LibraryResource($library)
-        ], 201);
-    }
+    return response()->json([
+        'message' => 'Library created successfully.',
+        'library' => new LibraryResource($library)
+    ], 201);
+}
+
 
     // Update a library (restricted to super-admin)
     public function update(Request $request, $id)
@@ -51,8 +73,8 @@ class LibraryController extends Controller
 
         $request->validate([
             'name' => 'sometimes|string|unique:libraries,name,' . $library->id,
-            'address' => 'sometimes|string',
             'contact_number' => 'sometimes|string',
+            'library_branch_id' => 'sometimes|exists:library_branches,id',
         ]);
 
         $library->update($request->all());
@@ -74,10 +96,32 @@ class LibraryController extends Controller
         return response()->json(['message' => 'Library deleted successfully.']);
     }
 
+    // bulk delete libraries (restricted to super-admin)
+    public function bulkDelete(Request $request)
+    {
+        $this->authorizeSuperAdminOrAdmin();
+
+        $ids = $request->input('ids');
+
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json(['message' => 'Invalid or no IDs provided.'], 400);
+        }
+
+        $validIds = Library::whereIn('id', $ids)->pluck('id')->toArray();
+
+        if (empty($validIds)) {
+            return response()->json(['message' => 'No valid IDs found.'], 400);
+        }
+
+        Library::destroy($validIds);
+
+        return response()->json(['message' => 'Libraries deleted successfully.']);
+    }
+
     // Utility method for checking role
     protected function authorizeSuperAdminOrAdmin()
     {
-        if (!(Auth::user()->hasRole('admin') || Auth::user()->hasRole('super-admin'))) {
+        if (!(Auth::user()->hasRole('admin') || Auth::user()->hasRole('superadmin'))) {
             abort(403, 'Unauthorized action. Admin or Super-admin access only.');
         }
     }
