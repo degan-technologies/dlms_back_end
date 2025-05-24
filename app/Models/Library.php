@@ -22,9 +22,8 @@ class Library extends Model
         return $this->hasMany(Shelf::class);
     }
 
-    public function bookItems()
-    {
-        return $this->hasMany(BookItem::class);
+    public function books(){
+        return $this->hasMany(Book::class);
     }
 
     public function askLibrarians(){

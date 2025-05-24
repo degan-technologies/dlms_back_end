@@ -25,9 +25,8 @@ class StoreNoteRequest extends FormRequest
         return [
             'e_book_id' => 'required|exists:e_books,id',
             'content' => 'required|string',
-            'page_number' => 'required|integer|min:1',
+            'page_number' => 'nullable|integer|min:1',
             'highlight_text' => 'nullable|string',
-            'metadata' => 'nullable|string',
         ];
     }
 }

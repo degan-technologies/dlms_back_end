@@ -13,15 +13,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Bookmark\BookmarkController;
 use App\Http\Controllers\Note\NoteController;
 use App\Http\Controllers\ChatMessage\ChatMessageController;
-
 use App\Http\Controllers\Collection\CollectionController;
 use App\Http\Controllers\BookItem\BookItemController;
 use App\Http\Controllers\Book\BookController;
 // use App\Http\Controllers\Collection\CollectionController;
 use App\Http\Controllers\EBook\EBookController;
+use App\Http\Controllers\EBook\EBookFileController;
 use App\Http\Controllers\Constant\ConstantController;
 use App\Http\Controllers\DashboardStatsController;
-use App\Http\Controllers\RecentlyViewed\RecentlyViewedController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StudentController;use App\Http\Controllers\Language\LanguageController;
 use App\Http\Controllers\SubjectController;
@@ -29,7 +28,7 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\FineController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReservationController;
-
+use App\Http\Controllers\RecentlyViewed\RecentlyViewedController;
 
 // 1. Public Routes
 Route::post('login', [AuthController::class, 'login']);
@@ -42,6 +41,7 @@ Route::get('physical-books', [BookItemController::class, 'physicalBooks']);
 Route::get('physical-books/{book_item}', [BookItemController::class, 'showPhysicalBook']);
 Route::get('ebooks', [BookItemController::class, 'ebooks']);
 Route::get('ebooks/{book_item}', [BookItemController::class, 'showEbook']);
+Route::get('book-items/{book_item}', [BookItemController::class, 'show']);
 
 // Constants & filters for frontend
 Route::prefix('constants')->group(function () {
@@ -70,7 +70,7 @@ Route::prefix('constants')->group(function () {
     Route::post('subjects/delete-multiple', [ConstantController::class, 'subjectDestroyMultiple']);
 
     Route::get('ebook-types', [ConstantController::class, 'ebookTypes']);
-    Route::get('grades', [ConstantController::class, 'grades']);
+    Route::get('grades',  [ConstantController::class, 'grades']);
 });
 
 Route::prefix('anonymous-chat')->group(function () {
@@ -84,6 +84,9 @@ Route::prefix('anonymous-chat')->group(function () {
     Route::post('/', [AskLibrarianController::class, 'store']);      // POST new visitor message
     Route::post('/reply', [AskLibrarianController::class, 'reply']); // POST reply (admin only frontend, if needed)
 });
+
+// Serve PDF files with CORS headers
+Route::get('ebooks/pdf/{filename}', [EBookFileController::class, 'servePdf'])->where('filename', '.*');
 
 // 2. Authenticated User Routes
 Route::middleware('auth:api')->group(function () {
@@ -128,24 +131,24 @@ Route::middleware('auth:api')->group(function () {
         Route::apiResource('notes', NoteController::class);
     // Chat Messages
     Route::apiResource('chat-messages', ChatMessageController::class);
+    Route::apiResource('notes', NoteController::class);
+    Route::apiResource('bookmarks', BookmarkController::class);
+    Route::apiResource('collections', CollectionController::class);
+    Route::get('my-collections', [CollectionController::class, 'myCollections']);
+    Route::get('my-collections/{collection}', [CollectionController::class, 'myCollectionShow']);
     // Recently Viewed
     Route::get('recently-viewed', [RecentlyViewedController::class, 'index']);
     Route::post('recently-viewed', [RecentlyViewedController::class, 'store']);
-
+    Route::get('user', [AuthController::class, 'user']);
 
 
     // 3. Student Role
+    Route::apiResource('ebooks', EBookController::class);
     Route::middleware('role:student')->group(function () {
-        // Collections (own only)
-        Route::apiResource('collections', CollectionController::class);
-        Route::post('collections/{collection}/add-ebook', [CollectionController::class, 'addEbook']);
-        Route::post('collections/{collection}/remove-ebook', [CollectionController::class, 'removeEbook']);
         // Read-only access to book items, books, ebooks
 
-        Route::get('book-items/{book_item}', [BookItemController::class, 'show']);
         // Route::get('books', [BookController::class, 'index']);
         // Route::get('books/{book}', [BookController::class, 'show']);
-        Route::get('ebooks', [EBookController::class, 'index']);
         Route::get('ebooks/{ebook}', [EBookController::class, 'show']);
         // Reading lists (legacy)
         // Route::get('reading-lists', ...);
@@ -153,15 +156,10 @@ Route::middleware('auth:api')->group(function () {
 
     // 4. Teacher Role
     Route::middleware('role:teacher')->group(function () {
-        // CRUD collections
-        Route::apiResource('collections', CollectionController::class);
-        Route::post('collections/{collection}/add-ebook', [CollectionController::class, 'addEbook']);
-        Route::post('collections/{collection}/remove-ebook', [CollectionController::class, 'removeEbook']);
         // CRUD ebooks
-        Route::apiResource('ebooks', EBookController::class);
+        
         // Read-only access to book items, books
 
-        Route::get('book-items/{book_item}', [BookItemController::class, 'show']);
         // Route::get('books', [BookController::class, 'index']);
         // Route::get('books/{book}', [BookController::class, 'show']);
     });
@@ -169,8 +167,10 @@ Route::middleware('auth:api')->group(function () {
     // 5. Librarian Role
     Route::middleware('role:librarian')->group(function () {
         // CRUD books, ebooks, book items
-        Route::apiResource('books', BookController::class);
-        Route::apiResource('ebooks', EBookController::class);
+        // Route::apiResource('books', BookController::class);
+        // Route::apiResource('ebooks', EBookController::class);
+        // Route::apiResource('book-items', BookItemController::class);
+       
         Route::apiResource('loans', LoanController::class);
         Route::get('fines', [FineController::class, 'index']);
         Route::get('fines/{fine}', [FineController::class, 'show']);
@@ -181,16 +181,14 @@ Route::middleware('auth:api')->group(function () {
 
         // Route::apiResource('book-items', BookItemController::class);
         // CRUD collections
-        Route::apiResource('collections', CollectionController::class);
     });
 
     // 6. Admin Role
     Route::middleware('role:admin')->group(function () {
         // Full access to all resources
-        // Route::apiResource('books', BookController::class);
-        Route::apiResource('ebooks', EBookController::class);
+        // // Route::apiResource('books', BookController::class);
+       
         // Route::apiResource('book-items', BookItemController::class);
-        Route::apiResource('collections', CollectionController::class);
         // Libraries, sections, users, publishers, asset types, shelves, etc.
         // Route::apiResource('libraries', LibraryController::class);
         // Route::apiResource('sections', SectionController::class);

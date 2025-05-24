@@ -5,20 +5,15 @@ namespace App\Http\Resources\BookItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
-class BookItemCollection extends ResourceCollection
-{
+class BookItemCollection extends ResourceCollection {
     /**
      * Transform the resource collection into an array.
      *
      * @return array<int|string, mixed>
      */
-    public function toArray(Request $request): array
-    {
+    public function toArray(Request $request): array {
         return [
-            'data' => $this->collection->map(function ($item) use ($request) {
-                // Always use BookItemResource to ensure all columns and relationships are included
-                return (new BookItemResource($item))->toArray($request);
-            }),
+            'data' => $this->collection,
             'pagination' => [
                 'total' => $this->resource->total(),
                 'count' => $this->resource->count(),

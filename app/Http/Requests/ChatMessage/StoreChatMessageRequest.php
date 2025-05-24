@@ -25,6 +25,7 @@ class StoreChatMessageRequest extends FormRequest
         return [
             'e_book_id' => 'required|exists:e_books,id',
             'question' => 'required|string',
+            'highlight_text' => 'nullable|string',
             'is_anonymous' => 'sometimes|boolean'
         ];
     }

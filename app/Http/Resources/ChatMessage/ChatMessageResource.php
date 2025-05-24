@@ -20,6 +20,7 @@ class ChatMessageResource extends JsonResource
             'user_id' => $this->user_id,
             'e_book_id' => $this->e_book_id,
             'question' => $this->question,
+            'highlight_text' => $this->highlight_text,
             'ai_response' => $this->ai_response,
             'is_anonymous' => $this->is_anonymous,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),

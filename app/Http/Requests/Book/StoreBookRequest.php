@@ -22,21 +22,16 @@ class StoreBookRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // BookItem attributes
-            'title' => 'required|string|max:255',
-            'grade' => 'nullable|string|max:50',
-            'library_id' => 'required|exists:libraries,id',
-            'shelf_id' => 'nullable|exists:shelves,id',
-            'subject_id' => 'nullable|exists:subjects,id',
-
-            // Book specific attributes
-            'edition' => 'nullable|string|max:50',
-            'isbn' => 'required|string|max:20|unique:books,isbn',
-            'pages' => 'nullable|integer',
-            'is_borrowable' => 'boolean',
-            'publication_year' => 'nullable|year',
             'book_item_id' => 'required|exists:book_items,id',
-
+            'title' => 'required|string|max:255',
+            'isbn'=> 'required|string|max:13',
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'edition' => 'nullable|string',
+            'pages' => 'nullable|integer',
+            'is_borrowable' => 'string|in:true,false',
+            'library_id' => 'required|exists:libraries,id',
+            'shelf_id' => 'required|exists:shelves,id',
+            'publication_year' => 'nullable|integer|digits:4|min:1000|max:' . date('Y'),
         ];
     }
 }

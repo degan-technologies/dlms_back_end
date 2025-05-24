@@ -24,9 +24,7 @@ class EBook extends Model {
     protected $fillable = [
         'book_item_id',
         'file_path',
-        'file_format',
         'file_name',
-        'isbn',
         'file_size_mb',
         'pages',
         'is_downloadable',
@@ -61,7 +59,7 @@ class EBook extends Model {
 
 
     public function bookmarks() {
-        return $this->hasMany(Bookmark::class);
+        return $this->hasMany(Bookmark::class, 'e_book_id');
     }
     public function notes() {
         return $this->hasMany(Note::class);
@@ -69,9 +67,12 @@ class EBook extends Model {
     public function chatMessages() {
         return $this->hasMany(ChatMessage::class);
     }
-
-    public function users(){
-        return $this ->hasMany(User::class);
+    public function bookmark() {
+        // This will be used with ->with(['bookmark' => function($q) use ($userId) { $q->where('user_id', $userId); }])
+        return $this->hasOne(Bookmark::class, 'e_book_id');
     }
 
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -17,10 +17,6 @@ class LibraryResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'address' => $this->address,
-            'contact_info' => $this->contact_info,
-            'branches' => LibraryBranchResource::collection($this->whenLoaded('branches')),
-            // Add any other fields you need from the Library model
         ];
     }
 }

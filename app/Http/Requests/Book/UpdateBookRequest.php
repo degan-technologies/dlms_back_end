@@ -23,19 +23,17 @@ class UpdateBookRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'edition' => 'sometimes|string|max:50',
-            'isbn' => [
-                'sometimes',
-                'string',
-                'max:20',
-                Rule::unique('books')->ignore($this->route('book')),
-            ],
-            'title' => 'sometimes|string|max:255',
+            'book_item_id' => 'sometimes|required|exists:book_items,id',
+            'title' => 'sometimes|required|string|max:255',
+            'user_id' => 'sometimes|required|exists:users,id',
+            'cover_image' => 'nullable|string',
+            'edition' => 'nullable|string',
             'pages' => 'nullable|integer',
-            'is_borrowable' => 'sometimes|boolean',
-            'book_item_id' => 'sometimes|exists:book_items,id',
-            'shelf_id' => 'nullable|exists:shelves,id',
-            'library_id' => 'sometimes|exists:libraries,id',
+            'is_borrowable' => 'boolean',
+            'is_reserved' => 'boolean',
+            'library_id' => 'sometimes|required|exists:libraries,id',
+            'shelf_id' => 'sometimes|required|exists:shelves,id',
+            'publication_year' => 'nullable|integer',
             
             // Book condition
             'condition' => 'nullable|string|max:255',

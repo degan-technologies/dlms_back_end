@@ -10,10 +10,10 @@ class CreateBookItemsTable extends Migration
     {
         Schema::create('book_items', function (Blueprint $table) {
             $table->id();
-            $table->string('title', 255);
+            $table->string('title', 255)->unique();
             $table->string('author', 255)->nullable();
-            $table->text('description')->nullable();
-            $table->string('cover_image_url')->nullable();
+            $table->text('description')->nullable(); 
+            $table->string('cover_image')->nullable(); 
             $table->timestamps();
             $table->softDeletes();
 
@@ -23,12 +23,7 @@ class CreateBookItemsTable extends Migration
                   ->constrained('libraries')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
-
-            $table->foreignId('shelf_id')
-                  ->constrained('shelves')
-                  ->onDelete('restrict')
-                  ->onUpdate('cascade');
-
+                  
             $table->foreignId('category_id')
                   ->constrained('categories')
                   ->onDelete('restrict')
@@ -50,7 +45,6 @@ class CreateBookItemsTable extends Migration
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
             $table->foreignId('user_id')
-                  ->nullable()
                   ->constrained('users')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');

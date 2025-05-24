@@ -33,9 +33,14 @@ class CollectionSeeder extends Seeder
         ];
 
         $createdCollections = [];
-
+        $users = \App\Models\User::all();
+        
         foreach ($collections as $collectionName) {
-            $collection = Collection::firstOrCreate(['name' => $collectionName]);
+            $user = $users->random();
+            $collection = Collection::firstOrCreate([
+                'name' => $collectionName,
+                'user_id' => $user->id,
+            ]);
             $createdCollections[] = $collection;
 
             // Only assign if there are at least 1 ebook

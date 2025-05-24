@@ -22,16 +22,15 @@ class UpdateBookItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'sometimes|string|max:255',
-            'author' => 'sometimes|string|max:255',
+            'title' => 'sometimes|required|string|max:255',
+            'author' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
-            'cover_image_url' => 'nullable|string|max:1024',
-            'language_id' => 'sometimes|exists:languages,id',
-            'category_id' => 'sometimes|exists:categories,id',
-            'grade' => 'nullable|string|max:50',
-            'library_id' => 'sometimes|exists:libraries,id',
-            'shelf_id' => 'nullable|exists:shelves,id',
-            'subject_id' => 'nullable|exists:subjects,id',
+            'cover_image' => 'nullable|string',
+            'grade_id' => 'sometimes|required|exists:grades,id',
+            'library_id' => 'sometimes|required|exists:libraries,id',
+            'category_id' => 'sometimes|required|exists:categories,id',
+            'language_id' => 'sometimes|required|exists:languages,id',
+            'subject_id' => 'sometimes|required|exists:subjects,id',
         ];
     }
 }

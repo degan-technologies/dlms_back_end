@@ -12,16 +12,16 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
-class CollectionController extends Controller
-{
+class CollectionController extends Controller {
     /**
-     * Display a listing of the user's collections.
-     */    public function index(Request $request)
-    {
+     * Display a listing of all collections (not user-specific).
+     */
+    public function index(Request $request) {
         $query = Collection::query();
-
-        // Only show the current user's collections
-        $query->where('user_id', auth()->id());
+        // Exclude collections created by users with the 'student' role
+        $query->whereDoesntHave('user.roles', function ($q) {
+            $q->where('name', 'student');
+        });
 
         // Search by name
         if ($request->has('name')) {
@@ -30,7 +30,7 @@ class CollectionController extends Controller
 
         // Filter by collections containing specific ebooks
         if ($request->has('contains_ebook_id')) {
-            $query->whereHas('ebooks', function($q) use ($request) {
+            $query->whereHas('ebooks', function ($q) use ($request) {
                 $q->where('e_books.id', $request->contains_ebook_id);
             });
         }
@@ -38,7 +38,7 @@ class CollectionController extends Controller
         // Filter by collections containing any of the specified ebooks
         if ($request->has('contains_any_ebook_ids')) {
             $ebookIds = explode(',', $request->contains_any_ebook_ids);
-            $query->whereHas('ebooks', function($q) use ($ebookIds) {
+            $query->whereHas('ebooks', function ($q) use ($ebookIds) {
                 $q->whereIn('e_books.id', $ebookIds);
             });
         }
@@ -47,7 +47,7 @@ class CollectionController extends Controller
         if ($request->has('contains_all_ebook_ids')) {
             $ebookIds = explode(',', $request->contains_all_ebook_ids);
             foreach ($ebookIds as $ebookId) {
-                $query->whereHas('ebooks', function($q) use ($ebookId) {
+                $query->whereHas('ebooks', function ($q) use ($ebookId) {
                     $q->where('e_books.id', $ebookId);
                 });
             }
@@ -68,10 +68,90 @@ class CollectionController extends Controller
             $allowedRelations = ['ebooks', 'user'];
             $query->with(array_intersect($relationships, $allowedRelations));
 
-            // Special case for nested relationships            if (in_array('ebooks.bookItem', $relationships)) {
+            // Special case for nested relationships
+            if (in_array('ebooks.bookItem', $relationships)) {
                 $query->with('ebooks.bookItem');
             }
+        }
 
+        // Custom sorting
+        if ($request->has('sort_by') && in_array($request->sort_by, ['created_at', 'updated_at', 'name'])) {
+            $direction = $request->has('sort_direction') && $request->sort_direction === 'asc' ? 'asc' : 'desc';
+            $query->orderBy($request->sort_by, $direction);
+        } else {
+            $query->latest(); // Default sort by created_at desc
+        }
+
+        // Sort by ebook count
+        if ($request->has('sort_by_ebook_count')) {
+            $direction = $request->has('sort_direction') && $request->sort_direction === 'asc' ? 'asc' : 'desc';
+            $query->withCount('ebooks')->orderBy('ebooks_count', $direction);
+        }
+
+        // Paginate the results
+        $perPage = $request->per_page ?? 15;
+        $collections = $query->paginate($perPage);
+
+        return new CollectionCollection($collections);
+    }
+
+    /**
+     * Display a listing of the authenticated user's collections.
+     */
+    public function myCollections(Request $request) {
+        $query = Collection::query();
+        $query->where('user_id', auth()->id());
+
+        // Search by name
+        if ($request->has('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
+        // Filter by collections containing specific ebooks
+        if ($request->has('contains_ebook_id')) {
+            $query->whereHas('ebooks', function ($q) use ($request) {
+                $q->where('e_books.id', $request->contains_ebook_id);
+            });
+        }
+
+        // Filter by collections containing any of the specified ebooks
+        if ($request->has('contains_any_ebook_ids')) {
+            $ebookIds = explode(',', $request->contains_any_ebook_ids);
+            $query->whereHas('ebooks', function ($q) use ($ebookIds) {
+                $q->whereIn('e_books.id', $ebookIds);
+            });
+        }
+
+        // Filter by collections containing all of the specified ebooks
+        if ($request->has('contains_all_ebook_ids')) {
+            $ebookIds = explode(',', $request->contains_all_ebook_ids);
+            foreach ($ebookIds as $ebookId) {
+                $query->whereHas('ebooks', function ($q) use ($ebookId) {
+                    $q->where('e_books.id', $ebookId);
+                });
+            }
+        }
+
+        // Filter by date range
+        if ($request->has('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Include relationships if requested
+        if ($request->has('with')) {
+            $relationships = explode(',', $request->with);
+            $allowedRelations = ['ebooks', 'user'];
+            $query->with(array_intersect($relationships, $allowedRelations));
+
+            // Special case for nested relationships
+            if (in_array('ebooks.bookItem', $relationships)) {
+                $query->with('ebooks.bookItem');
+            }
+        }
 
         // Custom sorting
         if ($request->has('sort_by') && in_array($request->sort_by, ['created_at', 'updated_at', 'name'])) {
@@ -97,8 +177,7 @@ class CollectionController extends Controller
     /**
      * Store a newly created collection in storage.
      */
-    public function store(StoreCollectionRequest $request)
-    {
+    public function store(StoreCollectionRequest $request) {
         try {
             DB::beginTransaction();
 
@@ -138,12 +217,7 @@ class CollectionController extends Controller
     /**
      * Display the specified collection.
      */
-    public function show(Request $request, Collection $collection)
-    {
-        // Check if the collection belongs to the authenticated user
-        if ($collection->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
-        }
+    public function show(Request $request, Collection $collection) {
 
         // Include relationships if requested
         if ($request->has('with')) {
@@ -161,10 +235,30 @@ class CollectionController extends Controller
     }
 
     /**
+     * Display the specified collection for the authenticated user only.
+     */
+    public function myCollectionShow(Request $request, Collection $collection) {
+        // Check if the collection belongs to the authenticated user
+        if ($collection->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
+        }
+        // Include relationships if requested
+        if ($request->has('with')) {
+            $relationships = explode(',', $request->with);
+            $allowedRelations = ['ebooks', 'user'];
+            $collection->load(array_intersect($relationships, $allowedRelations));
+            // Special case for nested relationships
+            if (in_array('ebooks.bookItem', $relationships)) {
+                $collection->load('ebooks.bookItem');
+            }
+        }
+        return new CollectionResource($collection);
+    }
+
+    /**
      * Update the specified collection in storage.
      */
-    public function update(UpdateCollectionRequest $request, Collection $collection)
-    {
+    public function update(UpdateCollectionRequest $request, Collection $collection) {
         try {
             DB::beginTransaction();
 
@@ -201,8 +295,7 @@ class CollectionController extends Controller
     /**
      * Add an ebook to the collection.
      */
-    public function addEbook(Request $request, Collection $collection)
-    {
+    public function addEbook(Request $request, Collection $collection) {
         // Check if the collection belongs to the authenticated user
         if ($collection->user_id !== auth()->id()) {
             return response()->json(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
@@ -229,8 +322,7 @@ class CollectionController extends Controller
     /**
      * Remove an ebook from the collection.
      */
-    public function removeEbook(Request $request, Collection $collection)
-    {
+    public function removeEbook(Request $request, Collection $collection) {
         // Check if the collection belongs to the authenticated user
         if ($collection->user_id !== auth()->id()) {
             return response()->json(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
@@ -252,8 +344,7 @@ class CollectionController extends Controller
     /**
      * Remove the specified collection from storage.
      */
-    public function destroy(Collection $collection)
-    {
+    public function destroy(Collection $collection) {
         // Check if the collection belongs to the authenticated user
         if ($collection->user_id !== auth()->id()) {
             return response()->json(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);

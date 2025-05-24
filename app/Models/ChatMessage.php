@@ -19,6 +19,7 @@ class ChatMessage extends Model
         'e_book_id',
         'user_id',
         'question',
+        'highlight_text',
         'ai_response',
         'is_anonymous'
     ];

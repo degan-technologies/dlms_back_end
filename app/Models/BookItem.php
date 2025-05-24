@@ -22,11 +22,10 @@ class BookItem extends Model {
         'title',
         'author',
         'description',
-        'cover_image_url',
+        'cover_image',
         'language_id',
         'category_id',
         'library_id',
-        'shelf_id',
         'subject_id',
         'grade_id',
         'user_id',
@@ -60,11 +59,15 @@ class BookItem extends Model {
         return $this->belongsTo(Language::class);
     }
 
-    public function subjects() {
+    public function subject() {
         return $this->belongsTo(Subject::class);
     }
 
     public function grade() {
         return $this->belongsTo(Grade::class);
+    }
+
+    public function user(){
+       return $this->belongsTo(User::class);
     }
 }

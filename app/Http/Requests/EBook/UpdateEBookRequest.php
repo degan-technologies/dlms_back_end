@@ -23,15 +23,15 @@ class UpdateEBookRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'book_item_id' => 'sometimes|exists:book_items,id',
-            'file_path' => 'sometimes|string|max:512',
-            'file_format' => 'nullable|string|max:20',
-            'file_name' => 'nullable|string|max:255',
-            'isbn' => 'nullable|string|max:20',
+            'book_item_id' => 'sometimes|required|exists:book_items,id',
+            'file_name' => 'sometimes|required|string|max:255',
+            'user_id' => 'sometimes|required|exists:users,id',
+            'file_path' => 'sometimes|required|string',
+            'file_format' => 'sometimes|required|string',
             'file_size_mb' => 'nullable|numeric',
             'pages' => 'nullable|integer',
-            'is_downloadable' => 'sometimes|boolean',
-            'e_book_type_id' => 'sometimes|exists:e_book_types,id',
+            'is_downloadable' => 'boolean',
+            'e_book_type_id' => 'sometimes|required|exists:ebook_types,id',
         ];
     }
 }
