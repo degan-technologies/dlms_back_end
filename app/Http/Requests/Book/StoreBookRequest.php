@@ -28,7 +28,7 @@ class StoreBookRequest extends FormRequest
             'library_id' => 'required|exists:libraries,id',
             'shelf_id' => 'nullable|exists:shelves,id',
             'subject_id' => 'nullable|exists:subjects,id',
-            
+
             // Book specific attributes
             'edition' => 'nullable|string|max:50',
             'isbn' => 'required|string|max:20|unique:books,isbn',
