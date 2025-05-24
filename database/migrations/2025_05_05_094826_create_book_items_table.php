@@ -17,6 +17,7 @@ class CreateBookItemsTable extends Migration
             $table->timestamps();
             $table->softDeletes();
 
+
             // Foreign keys
             $table->foreignId('library_id')
                   ->constrained('libraries')
@@ -32,14 +33,14 @@ class CreateBookItemsTable extends Migration
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
 
-            
+
             $table->foreignId('subject_id')
-                  ->nullable() 
+                  ->nullable()
                   ->constrained('subjects')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
             $table->foreignId('grade_id')
-                  ->nullable() 
+                  ->nullable()
                   ->constrained('grades')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
@@ -55,4 +56,3 @@ class CreateBookItemsTable extends Migration
         Schema::dropIfExists('book_items');
     }
 }
-

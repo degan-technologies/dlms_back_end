@@ -13,8 +13,7 @@ class Student extends Model {
         'first_name',
         'last_name',
         'adress',
-        'grade',
-        'section',
+        'section_id',
         'gender',
         'grade_id',
     ];
@@ -22,8 +21,10 @@ class Student extends Model {
     public function user() {
         return $this->belongsTo(User::class);
     }
-
     public function grade() {
         return $this->belongsTo(Grade::class);
+    }
+    public function section() {
+        return $this->belongsTo(Section::class);
     }
 }

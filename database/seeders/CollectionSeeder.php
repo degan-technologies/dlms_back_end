@@ -12,7 +12,7 @@ class CollectionSeeder extends Seeder
     {
         $this->command->info('Seeding collections and collection-ebook associations...');        // Get all ebooks
         $ebooks = EBook::all();
-        
+
         if ($ebooks->isEmpty()) {
             $this->command->warn('No ebooks found. Please run EbookSeeder first.');
             return;
@@ -43,12 +43,16 @@ class CollectionSeeder extends Seeder
             ]);
             $createdCollections[] = $collection;
 
-            // Assign random ebooks to this collection (between 2 and 5)
-            $collectionEbooks = $ebooks->random(rand(2, min(5, $ebooks->count())));
-            
-            foreach ($collectionEbooks as $ebook) {
-                // Use attach method to create the relationship in the pivot table
-                $collection->ebooks()->syncWithoutDetaching([$ebook->id]);
+            // Only assign if there are at least 1 ebook
+            if ($ebooks->count() >= 2) {
+                $collectionEbooks = $ebooks->random(rand(2, min(5, $ebooks->count())));
+
+                foreach ($collectionEbooks as $ebook) {
+                    // Use attach method to create the relationship in the pivot table
+                    $collection->ebooks()->syncWithoutDetaching([$ebook->id]);
+                }
+            } elseif ($ebooks->count() === 1) {
+                $collection->ebooks()->syncWithoutDetaching([$ebooks->first()->id]);
             }
         }
 

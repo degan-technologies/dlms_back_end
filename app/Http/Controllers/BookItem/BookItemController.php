@@ -147,7 +147,8 @@ class BookItemController extends Controller {    public function index(Request $
     /**
      * Display the specified resource.
      */
-    public function show(Request $request, BookItem $bookItem) {
+    public function show(Request $request, BookItem $bookItem)
+    {
         // Format preference
         $preferEbook = $request->has('format') && $request->format === 'ebook';        // Load the appropriate relationships based on preference
         if ($preferEbook) {
@@ -208,7 +209,8 @@ class BookItemController extends Controller {    public function index(Request $
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateBookItemRequest $request, BookItem $bookItem) {
+    public function update(UpdateBookItemRequest $request, BookItem $bookItem)
+    {
         $validated = $request->validated();
 
         $bookItem->update($validated);
@@ -218,7 +220,8 @@ class BookItemController extends Controller {    public function index(Request $
 
     /**
      * Remove the specified resource from storage.
-     */    public function destroy(BookItem $bookItem) {
+     */    public function destroy(BookItem $bookItem)
+    {
         // First check if there are any books or ebooks associated with this item
         if ($bookItem->books()->count() > 0 || $bookItem->ebooks()->count() > 0) {
             return response()->json([
@@ -229,6 +232,43 @@ class BookItemController extends Controller {    public function index(Request $
         $bookItem->delete();
 
         return response()->json(['message' => 'Book item deleted successfully']);
+    }
+
+    /**
+     * Remove multiple book items from storage.
+     */
+    public function destroyMultiple(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (!is_array($ids) || empty($ids)) {
+            return response()->json(['message' => 'No book item IDs provided.'], Response::HTTP_BAD_REQUEST);
+        }
+        $failed = [];
+        foreach ($ids as $id) {
+            $bookItem = BookItem::find($id);
+            if (!$bookItem) {
+                $failed[] = [
+                    'id' => $id,
+                    'reason' => 'Book item not found.'
+                ];
+                continue;
+            }
+            if ($bookItem->books()->count() > 0 || $bookItem->ebooks()->count() > 0) {
+                $failed[] = [
+                    'id' => $id,
+                    'reason' => 'Book item has associated books or ebooks.'
+                ];
+                continue;
+            }
+            $bookItem->delete();
+        }
+        if (!empty($failed)) {
+            return response()->json([
+                'message' => 'Some book items could not be deleted.',
+                'failed' => $failed
+            ], Response::HTTP_CONFLICT);
+        }
+        return response()->json(['message' => 'Book items deleted successfully.'], Response::HTTP_OK);
     }
 
     /**
@@ -330,7 +370,8 @@ class BookItemController extends Controller {    public function index(Request $
     /**
      * Get only physical books
      */
-    public function physicalBooks(Request $request) {
+    public function physicalBooks(Request $request)
+    {
         $request->merge(['item_type' => 'book']);
         return $this->index($request);
     }
@@ -338,7 +379,8 @@ class BookItemController extends Controller {    public function index(Request $
     /**
      * Get only ebooks
      */
-    public function ebooks(Request $request) {
+    public function ebooks(Request $request)
+    {
         $request->merge(['item_type' => 'ebook', 'format' => 'ebook']);
         return $this->index($request);
     }
@@ -346,7 +388,8 @@ class BookItemController extends Controller {    public function index(Request $
     /**
      * Display a single physical book
      */
-    public function showPhysicalBook(Request $request, BookItem $bookItem) {
+    public function showPhysicalBook(Request $request, BookItem $bookItem)
+    {
         // Make sure we only return physical book data
         $request->merge(['format' => 'book']);
 
@@ -362,7 +405,8 @@ class BookItemController extends Controller {    public function index(Request $
     /**
      * Display a single ebook with its notes and chat messages
      */
-    public function showEbook(Request $request, BookItem $bookItem) {
+    public function showEbook(Request $request, BookItem $bookItem)
+    {
         // Make sure we only return ebook data
         $request->merge(['format' => 'ebook']);
 

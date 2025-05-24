@@ -39,6 +39,10 @@ class EBook extends Model {
 
     ];
 
+    public function uploader(): BelongsTo{
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
 
     public function ebookType() {
         return $this->belongsTo(EbookType::class, 'e_book_type_id');
@@ -52,6 +56,7 @@ class EBook extends Model {
     public function collections() {
         return $this->belongsToMany(Collection::class, 'collection_ebook', 'e_book_id', 'collection_id');
     }
+
 
     public function bookmarks() {
         return $this->hasMany(Bookmark::class, 'e_book_id');
