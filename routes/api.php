@@ -1,4 +1,5 @@
 
+
 <?php
 
 use App\Http\Controllers\API\AuthController;
@@ -20,10 +21,15 @@ use App\Http\Controllers\Book\BookController;
 use App\Http\Controllers\EBook\EBookController;
 use App\Http\Controllers\Constant\ConstantController;
 use App\Http\Controllers\DashboardStatsController;
-use App\Http\Controllers\LoanController;
 use App\Http\Controllers\RecentlyViewed\RecentlyViewedController;
 use App\Http\Controllers\StaffController;
-use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentController;use App\Http\Controllers\Language\LanguageController;
+use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\LoanController;
+use App\Http\Controllers\FineController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReservationController;
+
 
 // 1. Public Routes
 Route::post('login', [AuthController::class, 'login']);
@@ -38,13 +44,39 @@ Route::get('ebooks', [BookItemController::class, 'ebooks']);
 Route::get('ebooks/{book_item}', [BookItemController::class, 'showEbook']);
 
 // Constants & filters for frontend
-Route::prefix('constants')->group(function() {
+Route::prefix('constants')->group(function () {
     Route::get('all', [ConstantController::class, 'getAllFilters']);
     Route::get('categories', [ConstantController::class, 'categories']);
-    Route::get('languages', [ConstantController::class, 'languages']);
-    Route::get('subjects', [ConstantController::class, 'subjects']);
+    Route::post('/categories', [ConstantController::class, 'createCategory']);
+    Route::put('/categories/{id}', [ConstantController::class, 'updateCategory']);
+    Route::delete('/categories/{id}', [ConstantController::class, 'deleteCategory']);
+    Route::get('grades', [ConstantController::class, 'grades']);
+    Route::post('/categories/delete-multiple', [ConstantController::class, 'deleteMultipleCategories']);
+
+    // Language endpoints
+    Route::get('languages', [ConstantController::class, 'languageIndex']);
+    Route::post('languages', [ConstantController::class, 'languageStore']);
+    Route::get('languages/{language}', [ConstantController::class, 'languageShow']);
+    Route::put('languages/{language}', [ConstantController::class, 'languageUpdate']);
+    Route::delete('languages/{language}', [ConstantController::class, 'languageDestroy']);
+    Route::post('languages/delete-multiple', [ConstantController::class, 'languageDestroyMultiple']);
+
+    // Subject endpoints
+    Route::get('subjects', [ConstantController::class, 'subjectIndex']);
+    Route::post('subjects', [ConstantController::class, 'storeSubject']);
+    Route::get('subjects/{subject}', [ConstantController::class, 'subjectShow']);
+    Route::put('subjects/{subject}', [ConstantController::class, 'subjectUpdate']);
+    Route::delete('subjects/{subject}', [ConstantController::class, 'subjectDestroy']);
+    Route::post('subjects/delete-multiple', [ConstantController::class, 'subjectDestroyMultiple']);
+
     Route::get('ebook-types', [ConstantController::class, 'ebookTypes']);
-    Route::get('grades',[ConstantController::class, 'grades']);
+    Route::get('grades', [ConstantController::class, 'grades']);
+});
+
+Route::prefix('anonymous-chat')->group(function () {
+    Route::get('/', [AskLibrarianController::class, 'index']);       // GET messages?session_id=...
+    Route::post('/', [AskLibrarianController::class, 'store']);      // POST new visitor message
+    Route::post('/reply', [AskLibrarianController::class, 'reply']); // POST reply (admin only frontend, if needed)
 });
 
 Route::prefix('anonymous-chat')->group(function () {
@@ -55,6 +87,16 @@ Route::prefix('anonymous-chat')->group(function () {
 
 // 2. Authenticated User Routes
 Route::middleware('auth:api')->group(function () {
+    Route::get('user', [AuthController::class, 'user']);
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/{notification}', [NotificationController::class, 'show']);
+    Route::post('/{notification}/read', [NotificationController::class, 'markAsRead'])
+         ->name('notifications.read');
+    Route::post('notifications/{id}', [NotificationController::class, 'markAsRead']);
+    Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::delete('notifications/{id}', [NotificationController::class, 'deleteNotification']);
+
     Route::get('/user', [AuthController::class, 'user']);
     Route::get('category',[DashboardController::class,'index']);
     Route::get('/users', [AuthController::class, 'allUsers']);
@@ -68,6 +110,11 @@ Route::middleware('auth:api')->group(function () {
     Route::get('user', [AuthController::class, 'user']);
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('book-items', [BookItemController::class, 'index']);
+    Route::post('book-items', [BookItemController::class, 'store']);
+    Route::put('book-items/{book_item}', [BookItemController::class, 'update']);
+    Route::delete('book-items/{book_item}', [BookItemController::class, 'destroy']);
+    Route::post('book-items/delete-multiple', [BookItemController::class, 'destroyMultiple']);
+
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
@@ -96,8 +143,8 @@ Route::middleware('auth:api')->group(function () {
         // Read-only access to book items, books, ebooks
 
         Route::get('book-items/{book_item}', [BookItemController::class, 'show']);
-        Route::get('books', [BookController::class, 'index']);
-        Route::get('books/{book}', [BookController::class, 'show']);
+        // Route::get('books', [BookController::class, 'index']);
+        // Route::get('books/{book}', [BookController::class, 'show']);
         Route::get('ebooks', [EBookController::class, 'index']);
         Route::get('ebooks/{ebook}', [EBookController::class, 'show']);
         // Reading lists (legacy)
@@ -115,8 +162,8 @@ Route::middleware('auth:api')->group(function () {
         // Read-only access to book items, books
 
         Route::get('book-items/{book_item}', [BookItemController::class, 'show']);
-        Route::get('books', [BookController::class, 'index']);
-        Route::get('books/{book}', [BookController::class, 'show']);
+        // Route::get('books', [BookController::class, 'index']);
+        // Route::get('books/{book}', [BookController::class, 'show']);
     });
 
     // 5. Librarian Role
@@ -124,6 +171,14 @@ Route::middleware('auth:api')->group(function () {
         // CRUD books, ebooks, book items
         Route::apiResource('books', BookController::class);
         Route::apiResource('ebooks', EBookController::class);
+        Route::apiResource('loans', LoanController::class);
+        Route::get('fines', [FineController::class, 'index']);
+        Route::get('fines/{fine}', [FineController::class, 'show']);
+        Route::post('fines', [FineController::class, 'store']);
+        Route::put('fines/{fine}', [FineController::class, 'update']);
+        Route::delete('fines/{fine}', [FineController::class, 'destroy']);
+        Route::get('reservations', [ReservationController::class, 'index']);
+
         // Route::apiResource('book-items', BookItemController::class);
         // CRUD collections
         Route::apiResource('collections', CollectionController::class);
@@ -132,7 +187,7 @@ Route::middleware('auth:api')->group(function () {
     // 6. Admin Role
     Route::middleware('role:admin')->group(function () {
         // Full access to all resources
-        Route::apiResource('books', BookController::class);
+        // Route::apiResource('books', BookController::class);
         Route::apiResource('ebooks', EBookController::class);
         // Route::apiResource('book-items', BookItemController::class);
         Route::apiResource('collections', CollectionController::class);

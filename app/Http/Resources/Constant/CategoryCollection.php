@@ -22,7 +22,14 @@ class CategoryCollection extends ResourceCollection
     public function toArray(Request $request): array
     {
         return [
-            'data' => $this->collection
+            'data' => $this->collection,
+             'meta' => [
+                'current_page' => $this->currentPage(),
+                'per_page' => $this->perPage(),
+                'books_count' => $this->books_count ?? 0,
+                'total' => $this->total(),
+                'last_page' => $this->lastPage(),
+            ],
         ];
     }
 }

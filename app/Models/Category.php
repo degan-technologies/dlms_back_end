@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -16,12 +17,16 @@ class Category extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'slug',
+        'category_name',
     ];
+
+    public function children()
+    {
+        return $this->hasMany(Category::class, 'parent_id');
+    }
 
     public function bookItems(): HasMany
     {
-        return $this->hasMany(BookItem::class);
+        return $this->hasMany(BookItem::class, 'category_id');
     }
 }

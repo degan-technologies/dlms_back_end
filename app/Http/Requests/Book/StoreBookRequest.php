@@ -24,25 +24,19 @@ class StoreBookRequest extends FormRequest
         return [
             // BookItem attributes
             'title' => 'required|string|max:255',
-            'author' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'cover_image_url' => 'nullable|string|max:1024',
-            'language_id' => 'required|exists:languages,id',
-            'category_id' => 'required|exists:categories,id',
             'grade' => 'nullable|string|max:50',
             'library_id' => 'required|exists:libraries,id',
             'shelf_id' => 'nullable|exists:shelves,id',
             'subject_id' => 'nullable|exists:subjects,id',
-            
+
             // Book specific attributes
             'edition' => 'nullable|string|max:50',
             'isbn' => 'required|string|max:20|unique:books,isbn',
             'pages' => 'nullable|integer',
             'is_borrowable' => 'boolean',
-            
-            // Book condition
-            'condition' => 'nullable|string|max:255',
-            'condition_note' => 'nullable|string',
+            'publication_year' => 'nullable|year',
+            'book_item_id' => 'required|exists:book_items,id',
+
         ];
     }
 }

@@ -3,8 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\EBook;
+use App\Models\Loan;
 use App\Models\Staff;
 use Illuminate\Database\Seeder;
+use Database\Seeders\LoanSeeder;
 
 class DatabaseSeeder extends Seeder
 {

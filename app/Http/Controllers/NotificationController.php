@@ -2,65 +2,116 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Notification;
-use App\Http\Resources\NotificationResource;
-use App\Models\NotificationType;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Http\Resources\Notification\NotificationResource;
+use App\Http\Resources\Notification\NotificationCollection;
 
 class NotificationController extends Controller
 {
-    public function index()
+    /**
+     * Get paginated notifications
+     */
+ public function index(Request $request)
+{
+    $notifications = $request->user()
+        ->notifications()
+        ->latest()
+        ->paginate($request->per_page ?? 15);
+
+    return new NotificationCollection($notifications);
+}
+
+public function show(DatabaseNotification $notification)
+{
+    $this->authorize('view', $notification);
+    
+    return new NotificationResource($notification);
+}
+
+    /**
+     * Mark notification as read
+     */
+    public function markAsRead($notificationId)
     {
-        return NotificationResource::collection(Notification::with(['user', 'type'])->get());
+        try {
+            $user = Auth::user();
+            $notification = $user->notifications()->findOrFail($notificationId);
+            
+            $notification->markAsRead();
+            
+            return response()->json([
+                'success' => true,
+                'unread_count' => $user->unreadNotifications()->count()
+            ]);
+            
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Notification not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to mark notification as read'], 500);
+        }
     }
 
-    public function store(Request $request)
+    /**
+     * Mark all notifications as read
+     */
+    public function markAllAsRead()
     {
-        $validated = $request->validate([
-            'message' => 'required|string',
-            'type' => 'required|string',
-        ]);
-
-        $user = $request->user();
-        $notificationType = NotificationType::where('type', $validated['type'])->firstOrFail();
-
-        $notification = Notification::create([
-            'message' => $validated['message'],
-            'user_id' => $user->id,
-            'notification_type_id' => $notificationType->id,
-        ]);
-        return new NotificationResource($notification);
+        try {
+            $user = Auth::user();
+            $user->unreadNotifications->markAsRead();
+            
+            return response()->json([
+                'success' => true,
+                'unread_count' => 0
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to mark all notifications as read'], 500);
+        }
     }
 
-    public function update(Request $request, $id)
+    /**
+     * Delete all notifications
+     */
+    public function clearAll()
     {
-        $notification = Notification::findOrFail($id);
-        $validated = $request->validate([
-            'message' => 'required|string',
-            'type' => 'required|string',
-        ]);
-
-        $user = $request->user();
-        $notificationType = NotificationType::where('type', $validated['type'])->firstOrFail();
-
-        $notification->update([
-            'message' => $validated['message'],
-            'user_id' => $user->id,
-            'notification_type_id' => $notificationType->id,
-        ]);
-        return new NotificationResource($notification);
+        try {
+            $user = Auth::user();
+            $user->notifications()->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'All notifications cleared',
+                'unread_count' => 0
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to clear notifications'], 500);
+        }
     }
 
-    public function show($id)
+    /**
+     * Delete single notification
+     */
+    public function destroy($notificationId)
     {
-        $notification = Notification::with(['user', 'type'])->findOrFail($id);
-        return new NotificationResource($notification);
-    }
-
-    public function destroy($id)
-    {
-        $notification = Notification::findOrFail($id);
-        $notification->delete();
-        return response()->json(['message' => 'Deleted successfully']);
+        try {
+            $user = Auth::user();
+            $notification = $user->notifications()->findOrFail($notificationId);
+            $notification->delete();
+            
+            return response()->json([
+                'success' => true,
+                'unread_count' => $user->unreadNotifications()->count()
+            ]);
+            
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Notification not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to delete notification'], 500);
+        }
     }
 }

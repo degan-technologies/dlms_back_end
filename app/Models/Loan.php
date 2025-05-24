@@ -29,7 +29,9 @@ class Loan extends Model {
     public function user() {
         return $this->belongsTo(User::class);
     }
-    public function fine() {
-        return $this->hasOne(Fine::class);
+    
+    public function fine()
+    {
+        return $this->hasOne(Fine::class, 'loan_id');
     }
 }
