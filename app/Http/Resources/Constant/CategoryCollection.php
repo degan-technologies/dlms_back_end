@@ -21,15 +21,21 @@ class CategoryCollection extends ResourceCollection
      */
     public function toArray(Request $request): array
     {
-        return [
+        $data = [
             'data' => $this->collection,
-             'meta' => [
+        ];
+
+        // Only add pagination meta if this is a paginated collection
+        if (method_exists($this->resource, 'currentPage')) {
+            $data['meta'] = [
                 'current_page' => $this->currentPage(),
                 'per_page' => $this->perPage(),
                 'books_count' => $this->books_count ?? 0,
                 'total' => $this->total(),
                 'last_page' => $this->lastPage(),
-            ],
-        ];
+            ];
+        }
+
+        return $data;
     }
 }

@@ -45,7 +45,7 @@ class ConstantController extends Controller {
         // Get all shelves from all libraries in the user's library branch
         $shelves = $libraries->isNotEmpty()
             ? $libraries->flatMap(function ($library) {
-            return $library->shelves;
+                return $library->shelves;
             })->unique('id')->values()
             : collect();
         return response()->json([
@@ -56,7 +56,7 @@ class ConstantController extends Controller {
             'ebook_types'  => (new EbookTypeCollection(EbookType::all()))->response()->getData(true),
             'libraries'    => (new LibraryCollection($libraries))->response()->getData(true),
             'shelves'      => (new ShelfCollection($shelves))->response()->getData(true),
-            
+
         ]);
     }
 
@@ -146,8 +146,7 @@ class ConstantController extends Controller {
     }
 
 
-    private function bumpCategoryCacheVersion()
-    {
+    private function bumpCategoryCacheVersion() {
         $version = Cache::get('categories_cache_version', 1);
         Cache::forever('categories_cache_version', $version + 1);
     }
@@ -179,7 +178,7 @@ class ConstantController extends Controller {
         });
     }
 
-     public function shelves() {
+    public function shelves() {
         return Cache::remember('shelves', 60 * 30, function () {
             $user = auth()->user();
             // Get the user's library branch and its related libraries
@@ -197,11 +196,14 @@ class ConstantController extends Controller {
      * Use this method after admin updates to categories, languages, etc.
      * 
      * @return \Illuminate\Http\JsonResponse
-     */   
-     public function refreshFilterCache() {
-        
-    public function deleteCategory($id)
-    {
+     */
+    public function refreshFilterCache() {
+        // You can add cache refresh logic here if needed.
+        // For now, just return a success response.
+        return response()->json(['message' => 'Filter cache refreshed successfully']);
+    }
+
+    public function deleteCategory($id) {
         // Eager load bookItems and their related books
         $category = Category::with('bookItems.books')->find($id);
 
@@ -244,8 +246,7 @@ class ConstantController extends Controller {
     /**
      * Invalidate filter cache for languages and subjects
      */
-    private function bumpFilterCacheVersion()
-    {
+    private function bumpFilterCacheVersion() {
         Cache::forget('all-filters');
         Cache::forget('languages');
         Cache::forget('subjects');
@@ -268,8 +269,7 @@ class ConstantController extends Controller {
      * 
      * @return \Illuminate\Http\Resources\Json\ResourceCollection
      */
-    public function subjectIndex(Request $request)
-    {
+    public function subjectIndex(Request $request) {
         $query = Subject::query();
         if ($request->has('search')) {
             $search = $request->search;
@@ -282,8 +282,7 @@ class ConstantController extends Controller {
         return new \App\Http\Resources\Constant\SubjectCollection($subjects);
     }
 
-    public function storeLanguage(StoreLanguageRequest $request)
-    {
+    public function storeLanguage(StoreLanguageRequest $request) {
         $language = Language::create($request->validated());
         $this->bumpLanguageCacheVersion();
         return response()->json([
@@ -292,13 +291,11 @@ class ConstantController extends Controller {
         ], Response::HTTP_CREATED);
     }
 
-    public function showLanguage(Language $language)
-    {
+    public function showLanguage(Language $language) {
         return new LanguageResource($language);
     }
 
-    public function update(UpdateLanguageRequest $request, Language $language)
-    {
+    public function update(UpdateLanguageRequest $request, Language $language) {
         $language->update($request->validated());
         $this->bumpLanguageCacheVersion();
         return response()->json([
@@ -307,15 +304,13 @@ class ConstantController extends Controller {
         ]);
     }
 
-    public function destroy(Language $language)
-    {
+    public function destroy(Language $language) {
         $language->delete();
         $this->bumpLanguageCacheVersion();
         return response()->json(['message' => 'Language deleted successfully.']);
     }
 
-    public function destroyMultiple(Request $request)
-    {
+    public function destroyMultiple(Request $request) {
         $ids = $request->input('ids', []);
         $failed = [];
         foreach ($ids as $id) {
@@ -337,8 +332,7 @@ class ConstantController extends Controller {
     }
 
     // --- Language CRUD ---
-    public function languageIndex(Request $request)
-    {
+    public function languageIndex(Request $request) {
         $query = Language::query();
         if ($request->has('search')) {
             $search = $request->search;
@@ -352,8 +346,7 @@ class ConstantController extends Controller {
         return new LanguageCollection($languages);
     }
 
-    public function languageStore(StoreLanguageRequest $request)
-    {
+    public function languageStore(StoreLanguageRequest $request) {
         $language = Language::create($request->validated());
         $this->bumpLanguageCacheVersion();
         return response()->json([
@@ -362,13 +355,11 @@ class ConstantController extends Controller {
         ], 201);
     }
 
-    public function languageShow(Language $language)
-    {
+    public function languageShow(Language $language) {
         return new LanguageResource($language);
     }
 
-    public function languageUpdate(UpdateLanguageRequest $request, Language $language)
-    {
+    public function languageUpdate(UpdateLanguageRequest $request, Language $language) {
         $language->update($request->validated());
         $this->bumpLanguageCacheVersion();
         return response()->json([
@@ -377,15 +368,13 @@ class ConstantController extends Controller {
         ]);
     }
 
-    public function languageDestroy(Language $language)
-    {
+    public function languageDestroy(Language $language) {
         $language->delete();
         $this->bumpLanguageCacheVersion();
         return response()->json(['message' => 'Language deleted successfully.']);
     }
 
-    public function languageDestroyMultiple(Request $request)
-    {
+    public function languageDestroyMultiple(Request $request) {
         $ids = $request->input('ids', []);
         $failed = [];
         foreach ($ids as $id) {
@@ -407,13 +396,11 @@ class ConstantController extends Controller {
     }
 
     // --- Subject CRUD ---
-    public function subjectShow(Subject $subject)
-    {
+    public function subjectShow(Subject $subject) {
         return new SubjectResource($subject);
     }
 
-    public function subjectUpdate(UpdateSubjectRequest $request, Subject $subject)
-    {
+    public function subjectUpdate(UpdateSubjectRequest $request, Subject $subject) {
         $subject->update($request->validated());
         $this->bumpSubjectCacheVersion();
         return response()->json([
@@ -422,15 +409,13 @@ class ConstantController extends Controller {
         ]);
     }
 
-    public function subjectDestroy(Subject $subject)
-    {
+    public function subjectDestroy(Subject $subject) {
         $subject->delete();
         $this->bumpSubjectCacheVersion();
         return response()->json(['message' => 'Subject deleted successfully.']);
     }
 
-    public function subjectDestroyMultiple(Request $request)
-    {
+    public function subjectDestroyMultiple(Request $request) {
         $ids = $request->input('ids', []);
         $failed = [];
         foreach ($ids as $id) {
@@ -451,15 +436,13 @@ class ConstantController extends Controller {
         return response()->json(['message' => 'Subjects deleted successfully.']);
     }
 
-    private function bumpLanguageCacheVersion()
-    {
+    private function bumpLanguageCacheVersion() {
         $version = Cache::get('languages_cache_version', 1);
         Cache::forever('languages_cache_version', $version + 1);
         // Only the language cache version is updated. No other caches are affected.
     }
 
-    private function bumpSubjectCacheVersion()
-    {
+    private function bumpSubjectCacheVersion() {
         $version = Cache::get('subjects_cache_version', 1);
         Cache::forever('subjects_cache_version', $version + 1);
         // Only the subject cache version is updated. No other caches are affected.
