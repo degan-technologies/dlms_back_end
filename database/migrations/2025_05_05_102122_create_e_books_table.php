@@ -16,20 +16,26 @@ class CreateEBooksTable extends Migration
             $table->float('file_size_mb')->nullable();
             $table->integer('pages')->nullable();
             $table->boolean('is_downloadable')->default(true);
+
             $table->timestamps();
             $table->softDeletes();
 
-            // Foreign key constraint
-            $table->foreignId('book_item_id')
-                  ->references('id')
-                  ->on('book_items')
-                  ->onDelete('cascade')
-                  ->onUpdate('cascade');
+            // Foreign key to the user who uploaded the e-book
+            $table->foreignId('user_id');
+                //   ->constrained('users');
 
-            $table->foreignId('e_book_type_id')
-                  ->constrained('e_book_types')
-                  ->onDelete('restrict')
-                  ->onUpdate('cascade');
+
+            // Foreign key constraint
+            $table->foreignId('book_item_id');
+                //   ->references('id')
+                //   ->on('book_items');
+                //   ->onDelete('cascade')
+                //   ->onUpdate('cascade');
+
+            $table->foreignId('e_book_type_id');
+                //   ->constrained('e_book_types');
+                //   ->onDelete('restrict')
+                //   ->onUpdate('cascade');
         });
     }
 

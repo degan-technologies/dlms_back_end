@@ -2,8 +2,12 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\API\LibraryBranchController;
 use App\Http\Controllers\API\LibraryController;
 use App\Http\Controllers\API\SectionController;
+use App\Http\Controllers\AskLibrarianController;
+use App\Http\Controllers\ReadingPerformanceController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Bookmark\BookmarkController;
 use App\Http\Controllers\Note\NoteController;
@@ -12,9 +16,10 @@ use App\Http\Controllers\ChatMessage\ChatMessageController;
 use App\Http\Controllers\Collection\CollectionController;
 use App\Http\Controllers\BookItem\BookItemController;
 use App\Http\Controllers\Book\BookController;
+// use App\Http\Controllers\Collection\CollectionController;
 use App\Http\Controllers\EBook\EBookController;
 use App\Http\Controllers\Constant\ConstantController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DashboardStatsController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\RecentlyViewed\RecentlyViewedController;
 use App\Http\Controllers\StaffController;
@@ -42,6 +47,12 @@ Route::prefix('constants')->group(function() {
     Route::get('grades',[ConstantController::class, 'grades']);
 });
 
+Route::prefix('anonymous-chat')->group(function () {
+    Route::get('/', [AskLibrarianController::class, 'index']);       // GET messages?session_id=...
+    Route::post('/', [AskLibrarianController::class, 'store']);      // POST new visitor message
+    Route::post('/reply', [AskLibrarianController::class, 'reply']); // POST reply (admin only frontend, if needed)
+});
+
 // 2. Authenticated User Routes
 Route::middleware('auth:api')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
@@ -51,11 +62,15 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/user', [AuthController::class, 'changePassword']);
     Route::get('/loan-history', [LoanController::class, 'history']);
 
+    Route::get('dashboard-stats', [DashboardStatsController::class, 'stats']);
+    Route::get('/reading-performance', [ReadingPerformanceController::class, 'index']);
+
+    Route::get('user', [AuthController::class, 'user']);
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('book-items', [BookItemController::class, 'index']);
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
-    
+
     Route::get('/reset-password/{token}', function ($token) {
         return view('auth.reset-password', ['token' => $token, 'email' => request('email')]);
     })->name('password.reset');
@@ -69,6 +84,8 @@ Route::middleware('auth:api')->group(function () {
     // Recently Viewed
     Route::get('recently-viewed', [RecentlyViewedController::class, 'index']);
     Route::post('recently-viewed', [RecentlyViewedController::class, 'store']);
+
+
 
     // 3. Student Role
     Route::middleware('role:student')->group(function () {
@@ -126,6 +143,8 @@ Route::middleware('auth:api')->group(function () {
         // ...add other admin resources
     });
 
+    Route::get('/branches', [LibraryBranchController::class, 'index']); // Accessible by all users
+
     // 7. Superadmin Role
     Route::middleware('role:superadmin')->group(function () {
         // Branch management, admin user management
@@ -142,6 +161,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('staff/bulk', [StaffController::class, 'storeBulk']);
         Route::resource('students', StudentController::class);
         Route::post('/students/batch', [StudentController::class, 'batchStore']);
-    
+        Route::delete('/bulk-delete', [LibraryController::class, 'bulkDelete']);
+
 });
 });

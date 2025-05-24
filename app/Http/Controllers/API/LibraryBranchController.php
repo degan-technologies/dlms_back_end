@@ -31,17 +31,29 @@ class LibraryBranchController extends Controller
         $validated = $request->validate([
             'branch_name' => 'required|string|unique:library_branches',
             'address' => 'nullable|string',
-            'contact_number' => 'nullable|string|max:20',
+            'contact_number' => [
+                'nullable',
+                'string',
+                'regex:/^\+251[0-9]{9}$/'
+            ],
             'email' => 'nullable|email',
-            'opening_hours' => 'nullable|string',
-            'library_id' => 'required|exists:libraries,id',
+            'opening_hours' => [
+                'nullable',
+                'string',
+                'regex:/^([01]\d|2[0-3]):([01]\d)-([01]\d|2[0-3]):([01]\d)$/', // Validate HH:mm-HH:mm format
+            ],
+            'location' => [
+                'required',
+                'string',
+                'regex:/^(https?:\/\/)?(www\.)?(google\.com\/maps|goo\.gl\/maps)\/[^\s]+$/', // Accept Google Maps URLs
+            ],
         ]);
 
-        $branch = LibraryBranch::create(attributes: $validated);
+        $branch = LibraryBranch::create($validated);
 
         return response()->json([
             'message' => 'Library branch created successfully.',
-            'branch' =>new LibraryBranchResource($branch)
+            'branch' => new LibraryBranchResource($branch)
         ], 201);
     }
 
@@ -55,10 +67,22 @@ class LibraryBranchController extends Controller
         $validated = $request->validate([
             'branch_name' => 'sometimes|string|unique:library_branches,branch_name,' . $branch->id,
             'address' => 'nullable|string',
-            'contact_number' => 'nullable|string|max:20',
+            'contact_number' => [
+                'nullable',
+                'string',
+                'regex:/^\+251[0-9]{9}$/'
+            ],
             'email' => 'nullable|email',
-            'opening_hours' => 'nullable|string',
-            'library_id' => 'sometimes|exists:libraries,id',
+            'opening_hours' => [
+                'nullable',
+                'string',
+                'regex:/^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/', // Validate HH:mm-HH:mm format
+            ],
+            'location' => [
+                'required',
+                'string',
+                'regex:/^(https?:\/\/)?(www\.)?(google\.com\/maps|goo\.gl\/maps)\/[^\s]+$/', // Accept Google Maps URLs
+            ],
         ]);
 
         $branch->update($validated);
@@ -82,12 +106,33 @@ class LibraryBranchController extends Controller
             'branch' => new LibraryBranchResource($branch)
     ]);
     }
+    public function bulkDelete(Request $request)
+    {
+        $this->authorizeSuperAdmin();
+
+        $ids = $request->input('ids');
+
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json(['message' => 'Invalid or no IDs provided.'], 400);
+        }
+
+        $validIds = LibraryBranch::whereIn('id', $ids)->pluck('id')->toArray();
+
+        if (empty($validIds)) {
+            return response()->json(['message' => 'No valid IDs found.'], 400);
+        }
+
+        LibraryBranch::destroy($validIds);
+
+        return response()->json(['message' => 'Library branches deleted successfully.']);
+    }
 
     // Utility: Check super-admin role
     protected function authorizeSuperAdmin()
     {
-        if (!Auth::user()?->hasRole('super-admin')) {
+        if (!Auth::user()?->hasRole('superadmin')) {
             abort(403, 'Unauthorized. Only super-admins can perform this action.');
         }
     }
+
 }

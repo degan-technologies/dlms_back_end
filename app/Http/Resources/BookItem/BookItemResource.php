@@ -30,17 +30,18 @@ class BookItemResource extends JsonResource
             'subject_id' => $this->subject_id,
             'created_at' => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,
             'updated_at' => $this->updated_at ? $this->updated_at->format('Y-m-d H:i:s') : null,
+            
         ];
-        
+
         // Determine the item type - prefer ebooks if both are available and 'format=ebook' is specified
         $hasPhysicalBook = $this->relationLoaded('books') && $this->books->isNotEmpty();
         $hasEbook = $this->relationLoaded('ebooks') && $this->ebooks->isNotEmpty();
-        
+
         $preferEbook = $request->has('format') && $request->format === 'ebook';
-        
+
         // Include type flag for downstream processing
         $data['item_type'] = ($hasEbook && $preferEbook) ? 'ebook' : ($hasPhysicalBook ? 'book' : ($hasEbook ? 'ebook' : null));
-        
+
         // Include either book data or ebook data, not both
         if ($data['item_type'] === 'book' || ($hasPhysicalBook && !$preferEbook)) {
             $data['available_books_count'] = $this->when(isset($this->available_books_count), $this->available_books_count);
@@ -51,7 +52,7 @@ class BookItemResource extends JsonResource
           // Add flags for filtering
         $data['has_physical_book'] = $hasPhysicalBook;
         $data['has_ebook'] = $hasEbook;
-        
+
         // Include other relationships when loaded
         $data['language'] = $this->whenLoaded('language', function() {
             return [
@@ -67,7 +68,7 @@ class BookItemResource extends JsonResource
                 'name' => $this->grade->name,
             ];
         });
-        
+
         $data['category'] = $this->whenLoaded('category', function() {
             return [
                 'id' => $this->category->id,
@@ -75,7 +76,7 @@ class BookItemResource extends JsonResource
                 'slug' => $this->category->slug,
             ];
         });
-        
+
         $data['library'] = $this->whenLoaded('library', function() {
             return [
                 'id' => $this->library->id,
@@ -88,7 +89,7 @@ class BookItemResource extends JsonResource
                 'name' => $this->subject->name,
             ];
         });
-        
+
         return $data;
     }
 }

@@ -19,7 +19,13 @@ use Carbon\Carbon;
 
 class AuthController extends Controller
 {
-    public function allUsers(): JsonResponse
+    /**
+     * Register a new user
+     *
+     * @param RegisterRequest $request
+     * @return JsonResponse
+     */
+    public function allUsers()
     {
         return response()->json(User::all(), Response::HTTP_OK);
     }
@@ -28,6 +34,7 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
+        // Create the user with validated data
         $user = User::create([
             'username' => $validated['username'],
             'email' => $validated['email'],
@@ -39,23 +46,21 @@ class AuthController extends Controller
         $user->assignRole($validated['role']);
         $token = $user->createToken('API Token')->accessToken;
 
+        // Return response with token and cookie
         return response()->json([
             'message' => 'User registered successfully',
             'user' => new UserResource($user),
             'token' => $token,
-        ], Response::HTTP_CREATED)->cookie(
-            'access_token',
-            $token,
-            60 * 24 * 30, // 30 days expiration
-            '/',
-            null,
-            false,
-            true,
-            false,
-            'Lax'
-        );
+        ], Response::HTTP_CREATED)
+            ->cookie('access_token', $token, 60 * 24, null, null, true, true, false, 'Strict');
     }
 
+    /**
+     * Login user with username or email
+     *
+     * @param LoginRequest $request
+     * @return JsonResponse
+     */
     public function login(LoginRequest $request): JsonResponse
     {
 
@@ -74,12 +79,15 @@ class AuthController extends Controller
         $token = $user->createToken('API Token')->accessToken;
 
         $minutes = $validated['remember_me'] ? 60 * 24 * 7 : 60 * 24;
-
+        $user->load('roles');
+        // Return response with token and cookie
         return response()->json([
             'message' => 'Login successful',
             'user' => new UserResource($user->load(['libraryBranch', 'roles'])),
             'token' => $token,
-        ]);
+
+        ], Response::HTTP_OK)
+            ->cookie('access_token', $token, $minutes, '/', null, true, true, false, 'Strict');
     }
 
     public function user(Request $request): JsonResponse
@@ -194,6 +202,7 @@ class AuthController extends Controller
         $request->user()->token()->revoke();
         $request->user()->token()->delete();
 
+        // Create new token
         $token = $request->user()->createToken('API Token')->accessToken;
 
         return response()->json([
@@ -205,7 +214,7 @@ class AuthController extends Controller
     public function updateUser(Request $request): JsonResponse
     {
         $user = $request->user();
-     
+
         $validated = $request->validate([
             'username' => 'string|max:255|unique:users,username,' . $user->id,
             'email' => 'email|max:255|unique:users,email,' . $user->id,

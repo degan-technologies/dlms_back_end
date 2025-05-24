@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request) 
+    public function index(Request $request)
     {
-        $perPage = $request->input('per_page', 6); // Default to 6 per page 
-        $page = $request->input('page', 1); 
+        $perPage = $request->input('per_page', 6); // Default to 6 per page
+        $page = $request->input('page', 1);
         $user = Auth::user();
         $role = $user->roles[0]->name;
 
@@ -42,24 +42,24 @@ class DashboardController extends Controller
 
         $categories = $query->paginate($perPage, ['*'], 'page', $page);
 
-        // Calculate the sum of books for each category 
-        $categories->getCollection()->transform(function ($category) { 
-            $category->total_books = $category->bookItems->sum(function ($bookItem) { 
-                return $bookItem->books->count(); 
-            }); 
-            return $category; 
-        }); 
+        // Calculate the sum of books for each category
+        $categories->getCollection()->transform(function ($category) {
+            $category->total_books = $category->bookItems->sum(function ($bookItem) {
+                return $bookItem->books->count();
+            });
+            return $category;
+        });
 
         // Return paginated response
-        return response()->json([ 
-            'data' => $categories->items(), 
-            'pagination' => [ 
-                'total_records' => $categories->total(), 
-                'per_page' => $categories->perPage(), 
-                'current_page' => $categories->currentPage(), 
-                'total_pages' => $categories->lastPage(), 
-            ], 
-        ]); 
+        return response()->json([
+            'data' => $categories->items(),
+            'pagination' => [
+                'total_records' => $categories->total(),
+                'per_page' => $categories->perPage(),
+                'current_page' => $categories->currentPage(),
+                'total_pages' => $categories->lastPage(),
+            ],
+        ]);
     }
 }
 
