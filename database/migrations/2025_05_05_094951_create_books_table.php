@@ -11,6 +11,7 @@ class CreateBooksTable extends Migration {
             $table->string('edition')->nullable();
             $table->string('isbn', 20)->nullable()->unique();
             $table->string('title')->nullable();
+            $table->string('cover_image')->nullable();
             $table->integer('pages')->nullable();
             $table->boolean('is_borrowable')->default(true); 
             $table->boolean('is_reserved')->default(false);
@@ -34,7 +35,10 @@ class CreateBooksTable extends Migration {
                   ->constrained('libraries')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
-
+            $table->foreignId('user_id')
+                  ->constrained('users')
+                  ->onDelete('restrict')
+                  ->onUpdate('cascade');
             
         });
     }

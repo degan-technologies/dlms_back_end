@@ -16,8 +16,7 @@ class Category extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'slug',
+        'category_name',
     ];
 
     public function bookItems(): HasMany

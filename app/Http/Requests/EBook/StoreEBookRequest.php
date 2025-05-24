@@ -22,25 +22,11 @@ class StoreEBookRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // BookItem attributes
-            'title' => 'required|string|max:255',
-            'author' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'cover_image_url' => 'nullable|string|max:1024',
-            'language_id' => 'required|exists:languages,id',
-            'category_id' => 'required|exists:categories,id',
-            'grade' => 'nullable|string|max:50',
-            'library_id' => 'required|exists:libraries,id',
-            'subject_id' => 'nullable|exists:subjects,id',
-            
-            // EBook specific attributes
-            'file_path' => 'required|string|max:512',
-            'file_format' => 'nullable|string|max:20',
-            'file_name' => 'nullable|string|max:255',
-            'isbn' => 'nullable|string|max:20',
-            'file_size_mb' => 'nullable|numeric',
-            'pages' => 'nullable|integer',
-            'is_downloadable' => 'boolean',
+            'book_item_id' => 'required|exists:book_items,id',
+            'file_name' => 'required|string|max:255',
+            'file_path' => 'nullable|string',
+            'pdf_file' => 'required|file|mimes:pdf|max:102400',
+            'is_downloadable' => 'nullable|string|in:true,false',
             'e_book_type_id' => 'required|exists:e_book_types,id',
         ];
     }

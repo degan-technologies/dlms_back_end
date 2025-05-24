@@ -13,7 +13,11 @@ return new class extends Migration
     {
         Schema::create('collections', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100)->unique();   
+            $table->string('name', 100)->unique();  
+            $table->foreignId('user_id')
+                ->constrained('users')
+                ->onDelete('restrict')
+                ->onUpdate('cascade'); 
             $table->timestamps();
         });
     }

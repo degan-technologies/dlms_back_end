@@ -5,7 +5,7 @@ namespace App\Http\Resources\Constant;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class LibraryResource extends JsonResource
+class ShelfResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,7 +16,7 @@ class LibraryResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
+            'name' => $this->code,
         ];
     }
 }

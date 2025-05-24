@@ -23,19 +23,25 @@ class BookmarkResource extends JsonResource
             'created_at' => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,
             'updated_at' => $this->updated_at ? $this->updated_at->format('Y-m-d H:i:s') : null,
             
-            // Include relationships when loaded
+            // Include the ebook details when loaded
+            'ebook' => $this->whenLoaded('ebook', function() {
+                return [
+                    'id' => $this->ebook->id,
+                    'title' => $this->ebook->bookItem->title ?? null,
+                    'author' => $this->ebook->bookItem->author ?? null,
+                    'cover_image_url' => $this->ebook->bookItem->cover_image_url ?? null,
+                    'file_format' => $this->ebook->file_format,
+                    'is_downloadable' => $this->ebook->is_downloadable,
+                ];
+            }),
+            
+            // Include user details when loaded
             'user' => $this->whenLoaded('user', function() {
                 return [
                     'id' => $this->user->id,
+                    'name' => $this->user->name,
                     'username' => $this->user->username,
-                    'email' => $this->user->email,
                 ];
-            }),
-            'ebook' => $this->whenLoaded('ebook', function() {
-                return new EBookResource($this->ebook);
-            }),
-            'book' => $this->whenLoaded('book', function() {
-                return new \App\Http\Resources\Book\BookResource($this->book);
             }),
         ];
     }

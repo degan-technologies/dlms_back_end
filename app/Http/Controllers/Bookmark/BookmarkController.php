@@ -3,72 +3,50 @@
 namespace App\Http\Controllers\Bookmark;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Bookmark\StoreBookmarkRequest;
-use App\Http\Requests\Bookmark\UpdateBookmarkRequest;
 use App\Http\Resources\Bookmark\BookmarkCollection;
 use App\Http\Resources\Bookmark\BookmarkResource;
 use App\Models\Bookmark;
+use App\Models\EBook;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class BookmarkController extends Controller
 {
     /**
-     * Display a listing of the bookmarks.
-     */    public function index(Request $request)
+     * Display a listing of the bookmarks for the authenticated user.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
     {
-        $query = Bookmark::query();
+        // Get the authenticated user
+        $user = $request->user();
         
-        // Only show the current user's bookmarks
-        $query->where('user_id', auth()->id());
+        // Query bookmarks for this user
+        $query = Bookmark::where('user_id', $user->id);
         
-        // Apply filters if provided
-        if ($request->has('e_book_id')) {
-            $query->where('e_book_id', $request->e_book_id);
-        }
+        // Add sorting
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortDir = $request->input('sort_dir', 'desc');
+        $query->orderBy($sortBy, $sortDir);
         
-        // Filter by multiple ebook IDs
-        if ($request->has('e_book_ids')) {
-            $ebookIds = explode(',', $request->e_book_ids);
-            $query->whereIn('e_book_id', $ebookIds);
-        }
-        
-        // Search by title
-        if ($request->has('title')) {
-            $query->where('title', 'like', '%' . $request->title . '%');
-        }
-
-        // Filter by date range
-        if ($request->has('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        
-        if ($request->has('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-        
-        // Include relationships if requested
+        // Eager load relationships
         if ($request->has('with')) {
             $relationships = explode(',', $request->with);
-            $allowedRelations = ['ebook', 'user'];
-            $query->with(array_intersect($relationships, $allowedRelations));
+            $validRelationships = array_intersect($relationships, ['ebook', 'user']);
+            if (!empty($validRelationships)) {
+                $query->with($validRelationships);
+            }
             
-            // Special case for nested relationships
-            if (in_array('ebook.bookItem', $relationships)) {
+            // If ebook is requested, also load the bookItem relation
+            if (in_array('ebook', $validRelationships)) {
                 $query->with('ebook.bookItem');
             }
         }
         
-        // Custom sorting
-        if ($request->has('sort_by') && in_array($request->sort_by, ['created_at', 'updated_at', 'title'])) {
-            $direction = $request->has('sort_direction') && $request->sort_direction === 'asc' ? 'asc' : 'desc';
-            $query->orderBy($request->sort_by, $direction);
-        } else {
-            $query->latest(); // Default sort by created_at desc
-        }
-        
         // Paginate the results
-        $perPage = $request->per_page ?? 15;
+        $perPage = $request->input('per_page', 15);
         $bookmarks = $query->paginate($perPage);
         
         return new BookmarkCollection($bookmarks);
@@ -76,75 +54,130 @@ class BookmarkController extends Controller
 
     /**
      * Store a newly created bookmark in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
-    public function store(StoreBookmarkRequest $request)
+    public function store(Request $request)
     {
-        $validated = $request->validated();
-        
-        // Add the authenticated user's ID
-        $validated['user_id'] = auth()->id();
+        $request->validate([
+            'e_book_id' => 'required|exists:e_books,id',
+            'title' => 'nullable|string|max:255',
+        ]);
+
+        // Check if the user already has a bookmark for this ebook
+        $existingBookmark = Bookmark::where('user_id', $request->user()->id)
+            ->where('e_book_id', $request->e_book_id)
+            ->first();
+            
+        if ($existingBookmark) {
+            return response()->json([
+                'message' => 'You have already bookmarked this ebook',
+                'bookmark' => new BookmarkResource($existingBookmark)
+            ], 200);
+        }
         
         // Create the bookmark
-        $bookmark = Bookmark::create($validated);
+        $bookmark = Bookmark::create([
+            'user_id' => $request->user()->id,
+            'e_book_id' => $request->e_book_id,
+            'title' => $request->title ?? EBook::find($request->e_book_id)->bookItem->title ?? 'Bookmark',
+        ]);
         
         // Load relationships for the response
-        $bookmark->load('ebook.bookItem');
+        $bookmark->load(['ebook.bookItem']);
         
-        return new BookmarkResource($bookmark);
+        return response()->json([
+            'message' => 'Bookmark created successfully',
+            'bookmark' => new BookmarkResource($bookmark)
+        ], 201);
     }
 
     /**
      * Display the specified bookmark.
+     *
+     * @param  \App\Models\Bookmark  $bookmark
+     * @return \Illuminate\Http\Response
      */
     public function show(Request $request, Bookmark $bookmark)
     {
-        // Check if the bookmark belongs to the authenticated user
-        if ($bookmark->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
+        // Authorize that the user owns this bookmark
+        if ($bookmark->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
         
-        // Include relationships if requested
-        if ($request->has('with')) {
-            $relationships = explode(',', $request->with);
-            $allowedRelations = ['ebook', 'user'];
-            $bookmark->load(array_intersect($relationships, $allowedRelations));
-            
-            // Special case for nested relationships
-            if (in_array('ebook.bookItem', $relationships)) {
-                $bookmark->load('ebook.bookItem');
-            }
-        }
+        // Load relationships
+        $bookmark->load(['ebook.bookItem']);
         
         return new BookmarkResource($bookmark);
     }
 
     /**
      * Update the specified bookmark in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Bookmark  $bookmark
+     * @return \Illuminate\Http\Response
      */
-    public function update(UpdateBookmarkRequest $request, Bookmark $bookmark)
+    public function update(Request $request, Bookmark $bookmark)
     {
-        $validated = $request->validated();
+        // Authorize that the user owns this bookmark
+        if ($bookmark->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
         
-        $bookmark->update($validated);
+        $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
         
-        // Load relationships for the response
-        $bookmark->load('ebook.bookItem');
+        $bookmark->update([
+            'title' => $request->title,
+        ]);
         
-        return new BookmarkResource($bookmark);
+        return response()->json([
+            'message' => 'Bookmark updated successfully',
+            'bookmark' => new BookmarkResource($bookmark)
+        ]);
     }
 
     /**
      * Remove the specified bookmark from storage.
+     *
+     * @param  \App\Models\Bookmark  $bookmark
+     * @return \Illuminate\Http\Response
      */
-    public function destroy(Bookmark $bookmark)
+    public function destroy(Request $request, Bookmark $bookmark)
     {
-        // Check if the bookmark belongs to the authenticated user
-        if ($bookmark->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
+        // Authorize that the user owns this bookmark
+        if ($bookmark->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
         
         $bookmark->delete();
         
-        return response()->json(['message' => 'Bookmark deleted successfully']);
+        return response()->json([
+            'message' => 'Bookmark deleted successfully'
+        ]);
+    }
+    
+    /**
+     * Check if an ebook is bookmarked by the current user
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $ebookId
+     * @return \Illuminate\Http\Response
+     */
+    public function checkBookmark(Request $request, $ebookId)
+    {
+        $bookmark = Bookmark::where('user_id', $request->user()->id)
+            ->where('e_book_id', $ebookId)
+            ->first();
+            
+        $isBookmarked = !is_null($bookmark);
+        
+        return response()->json([
+            'is_bookmarked' => $isBookmarked,
+            'bookmark' => $isBookmarked ? new BookmarkResource($bookmark) : null
+        ]);
     }
 }

@@ -4,8 +4,7 @@ namespace App\Http\Resources\BookItem;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\Book\BookResource;
-use App\Http\Resources\EBook\EBookResource;
+use Illuminate\Support\Facades\Storage;
 
 class BookItemResource extends JsonResource
 {
@@ -18,76 +17,103 @@ class BookItemResource extends JsonResource
         // Common BookItem properties
         $data = [
             'id' => $this->id,
+            'user_id' => $this->user_id,
             'title' => $this->title,
             'author' => $this->author,
             'description' => $this->description,
-            'cover_image_url' => $this->cover_image_url,
-            'language_id' => $this->language_id,
-            'category_id' => $this->category_id,
-            'grade' => $this->grade,
-            'library_id' => $this->library_id,
-            'shelf_id' => $this->shelf_id,
-            'subject_id' => $this->subject_id,
-            'created_at' => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,
-            'updated_at' => $this->updated_at ? $this->updated_at->format('Y-m-d H:i:s') : null,
+            'cover_image' => $this->cover_image ? Storage::disk('public')->url($this->cover_image) : null,
+            'grade' => [
+                'id' => $this->grade_id,
+                'name' => optional($this->grade)->name,
+            ],
+            'library' => [
+                'id' => $this->library_id,
+                'name' => optional($this->library)->name,
+            ],
+            'category' => [
+                'id' => $this->category_id,
+                'name' => optional($this->category)->category_name,
+            ],
+            'language' => [
+                'id' => $this->language_id,
+                'name' => optional($this->language)->name,
+            ],
+            'subject' => [
+                'id' => $this->subject_id,
+                'name' => optional($this->subject)->name,
+            ],
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
         
-        // Determine the item type - prefer ebooks if both are available and 'format=ebook' is specified
-        $hasPhysicalBook = $this->relationLoaded('books') && $this->books->isNotEmpty();
-        $hasEbook = $this->relationLoaded('ebooks') && $this->ebooks->isNotEmpty();
-        
-        $preferEbook = $request->has('format') && $request->format === 'ebook';
-        
-        // Include type flag for downstream processing
-        $data['item_type'] = ($hasEbook && $preferEbook) ? 'ebook' : ($hasPhysicalBook ? 'book' : ($hasEbook ? 'ebook' : null));
-        
-        // Include either book data or ebook data, not both
-        if ($data['item_type'] === 'book' || ($hasPhysicalBook && !$preferEbook)) {
-            $data['available_books_count'] = $this->when(isset($this->available_books_count), $this->available_books_count);
-            $data['books'] = BookResource::collection($this->whenLoaded('books'));
-        } else if ($data['item_type'] === 'ebook') {
-            $data['ebooks'] = EBookResource::collection($this->whenLoaded('ebooks'));
+        // Add book counts if they exist
+        if (isset($this->books_count)) {
+            $data['books_count'] = [
+                'total' => $this->books_count,
+                'available' => $this->available_books_count ?? 0
+            ];
         }
-          // Add flags for filtering
-        $data['has_physical_book'] = $hasPhysicalBook;
-        $data['has_ebook'] = $hasEbook;
         
-        // Include other relationships when loaded
-        $data['language'] = $this->whenLoaded('language', function() {
-            return [
-                'id' => $this->language->id,
-                'name' => $this->language->name,
-                'code' => $this->language->code,
+        // Add ebook counts if they exist
+        if (isset($this->ebooks_count)) {
+            $data['ebooks_count'] = [
+                'total' => $this->ebooks_count,
+                'downloadable' => $this->downloadable_ebooks_count ?? 0,
+                'by_type' => [
+                    'pdf' => $this->pdf_ebooks_count ?? 0,
+                    'audio' => $this->audio_ebooks_count ?? 0,
+                    'video' => $this->video_ebooks_count ?? 0
+                ]
             ];
-        });
-
-        $data['grade'] = $this->whenLoaded('grade', function() {
-            return [
-                'id' => $this->grade->id,
-                'name' => $this->grade->name,
-            ];
-        });
+        }
         
-        $data['category'] = $this->whenLoaded('category', function() {
-            return [
-                'id' => $this->category->id,
-                'name' => $this->category->name,
-                'slug' => $this->category->slug,
+        // Add teacher information if it's loaded
+        if ($this->relationLoaded('user') && $this->user && $this->user->relationLoaded('staff') && $this->user->staff) {
+            $data['teacher'] = [
+                'id' => $this->user->id,
+                'first_name' => $this->user->staff->first_name,
+                'last_name' => $this->user->staff->last_name,
+                'department' => $this->user->staff->department
             ];
-        });
+        }
         
-        $data['library'] = $this->whenLoaded('library', function() {
-            return [
-                'id' => $this->library->id,
-                'name' => $this->library->name,
-            ];
-        });
-          $data['subject'] = $this->whenLoaded('subject', function() {
-            return [
-                'id' => $this->subject->id,
-                'name' => $this->subject->name,
-            ];
-        });
+        // Add books and ebooks data if they are loaded (for show method)
+        if ($this->relationLoaded('books') && count($this->books) > 0) {
+            $data['books'] = $this->books->map(function($book) {
+                return [
+                    'id' => $book->id,
+                    'edition' => $book->edition,
+                    'isbn' => $book->isbn,
+                    'pages' => $book->pages,
+                    'is_borrowable' => $book->is_borrowable,
+                    'is_reserved' => $book->is_reserved,
+                    'publication_year' => $book->publication_year,
+                    'shelf_id' => $book->shelf_id,
+                    'shelf_name' => optional($book->shelf)->name,
+                    'library_id' => $book->library_id,
+                    'library_name' => optional($book->library)->name,
+                ];
+            });
+        }
+        
+        if ($this->relationLoaded('ebooks') && count($this->ebooks) > 0) {
+            $data['ebooks'] = $this->ebooks->map(function($ebook) {
+                return [
+                    'id' => $ebook->id,
+                    'file_name' => $ebook->file_name,
+                    'file_path' => $ebook->file_path,
+                    'file_format' => $ebook->file_format,
+                    'file_size_mb' => $ebook->file_size_mb,
+                    'pages' => $ebook->pages,
+                    'is_downloadable' => $ebook->is_downloadable,
+                    'type' => optional($ebook->ebookType)->name,
+                    // Add bookmark, notes, and chat messages if they are loaded
+                    'bookmark' => $ebook->relationLoaded('bookmark') ? $ebook->bookmark : null,
+                    'notes_count' => $ebook->relationLoaded('notes') ? $ebook->notes->count() : null,
+                    'chat_messages_count' => $ebook->relationLoaded('chatMessages') ? $ebook->chatMessages->count() : null,
+                ];
+            });
+        }
         
         return $data;
     }

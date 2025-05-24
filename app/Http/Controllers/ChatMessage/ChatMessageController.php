@@ -109,9 +109,10 @@ class ChatMessageController extends Controller
                 throw new \Exception('Gemini API key not configured');
             }
             
+            $endpoint = env('GEMINI_ENDPOINT', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent');
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
-            ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' . $apiKey, [
+            ])->post($endpoint . '?key=' . $apiKey, [
                 'contents' => [
                     [
                         'parts' => [
@@ -189,13 +190,13 @@ class ChatMessageController extends Controller
             try {
                 // Send the question to Gemini API
                 $apiKey = env('GEMINI_API_KEY');
-                
                 if (!$apiKey) {
                     throw new \Exception('Gemini API key not configured');
                 }
-                  $response = Http::withHeaders([
+                $endpoint = env('GEMINI_ENDPOINT', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent');
+                $response = Http::withHeaders([
                     'Content-Type' => 'application/json',
-                ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' . $apiKey, [
+                ])->post($endpoint . '?key=' . $apiKey, [
                     'contents' => [
                         [
                             'parts' => [
