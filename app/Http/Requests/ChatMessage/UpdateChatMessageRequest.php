@@ -1,17 +1,18 @@
 <?php
 
-namespace App\Http\Requests\V1\Bookmark;
+namespace App\Http\Requests\ChatMessage;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateBookmarkRequest extends FormRequest
+class UpdateChatMessageRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        // Make sure the user is the owner of the chat message
+        return auth()->check() && $this->route('chatMessage')->user_id === auth()->id();
     }
 
     /**
@@ -22,11 +23,8 @@ class UpdateBookmarkRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'page_number' => 'nullable|integer|min:1',
-            'position' => 'nullable|string',
-            'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'metadata' => 'nullable|array',
+            'question' => 'sometimes|required|string',
+            'is_anonymous' => 'sometimes|boolean',
         ];
     }
 }

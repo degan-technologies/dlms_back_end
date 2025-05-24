@@ -25,10 +25,11 @@ class BookItem extends Model {
         'cover_image_url',
         'language_id',
         'category_id',
-        'grade',
         'library_id',
         'shelf_id',
         'subject_id',
+        'grade_id',
+        'user_id',
     ];
 
     public function books() {
@@ -61,5 +62,9 @@ class BookItem extends Model {
 
     public function subjects() {
         return $this->belongsTo(Subject::class);
+    }
+
+    public function grade() {
+        return $this->belongsTo(Grade::class);
     }
 }

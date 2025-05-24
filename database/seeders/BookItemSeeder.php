@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\BookItem;
+use App\Models\Book;
+use App\Models\EBook;
 use App\Models\Category;
 use App\Models\Language;
 use App\Models\Library;
@@ -16,65 +18,127 @@ class BookItemSeeder extends Seeder
     {
         $this->command->info('Seeding book items...');
 
-        // Get necessary related models
         $libraries = Library::all();
         $shelves = Shelf::all();
         $categories = Category::all();
         $languages = Language::all();
         $subjects = Subject::all();
+        $grades = \App\Models\Grade::all();
 
-        // Check if we have the necessary data
         if ($libraries->isEmpty() || $shelves->isEmpty() || $categories->isEmpty() || $languages->isEmpty() || $subjects->isEmpty()) {
             $this->command->warn('Missing required data for BookItem seeder. Please seed related tables first.');
             return;
         }
 
-        // Sample book items data
-        $bookItems = [
+        // 5 physical books
+        $physicalBooks = [
             [
-                'title' => 'Introduction to Mathematics',
-                'author' => 'John Smith',
-                'description' => 'A comprehensive introduction to basic mathematics principles.',
-                'cover_image_url' => 'https://example.com/images/math-intro.jpg',
-                'grade' => 'Grade 9',
-            ],
-            [
-                'title' => 'Advanced Physics',
-                'author' => 'Maria Rodriguez',
-                'description' => 'Explores advanced concepts in modern physics.',
-                'cover_image_url' => 'https://example.com/images/physics-advanced.jpg',
-                'grade' => 'Grade 12',
-            ],
-            [
-                'title' => 'History of Ethiopia',
-                'author' => 'Dawit Bekele',
-                'description' => 'A detailed account of Ethiopian history and culture.',
-                'cover_image_url' => 'https://example.com/images/ethiopia-history.jpg',
-                'grade' => 'Grade 10',
-            ],
-            [
-                'title' => 'Computer Programming Basics',
-                'author' => 'Sarah Johnson',
-                'description' => 'Learn the fundamentals of computer programming.',
-                'cover_image_url' => 'https://example.com/images/programming.jpg',
+                'title' => 'Modern Chemistry',
+                'author' => 'Jane Doe',
+                'description' => 'A modern approach to chemistry.',
+                'cover_image_url' => 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
                 'grade' => 'Grade 11',
             ],
             [
-                'title' => 'Biology and Life Sciences',
-                'author' => 'Michael Chen',
-                'description' => 'Introduction to biology and the study of living organisms.',
-                'cover_image_url' => 'https://example.com/images/biology.jpg',
+                'title' => 'World Geography',
+                'author' => 'Alex Turner',
+                'description' => 'Explore the world and its geography.',
+                'cover_image_url' => 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca',
+                'grade' => 'Grade 10',
+            ],
+            [
+                'title' => 'English Literature',
+                'author' => 'Emily Bronte',
+                'description' => 'Classic English literature studies.',
+                'cover_image_url' => 'https://images.unsplash.com/photo-1512820790803-83ca734da794',
+                'grade' => 'Grade 12',
+            ],
+            [
+                'title' => 'Basic Algebra',
+                'author' => 'Robert Brown',
+                'description' => 'Algebra for beginners.',
+                'cover_image_url' => 'https://images.unsplash.com/photo-1464983953574-0892a716854b',
+                'grade' => 'Grade 9',
+            ],
+            [
+                'title' => 'African History',
+                'author' => 'Nia Okoye',
+                'description' => 'A journey through African history.',
+                'cover_image_url' => 'https://images.unsplash.com/photo-1503676382389-4809596d5290',
                 'grade' => 'Grade 8',
             ],
         ];
 
-        foreach ($bookItems as $item) {
-            BookItem::firstOrCreate(
-                ['title' => $item['title'], 'author' => $item['author']],
+        // 5 ebooks with specific type and file paths
+        $ebooks = [
+            [
+                'title' => 'Digital Mathematics',
+                'author' => 'Alan Turing',
+                'description' => 'Mathematics in the digital age.',
+                'cover_image_url' => 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308',
+                'grade' => 'Grade 11',
+                'e_book_type_id' => 1,
+                'file_format' => 'PDF',
+                'file_path' => 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+                'file_name' => 'digital_mathematics.pdf',
+            ],
+            [
+                'title' => 'Physics Video Lessons',
+                'author' => 'Isaac Newton',
+                'description' => 'Physics explained with videos.',
+                'cover_image_url' => 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b99',
+                'grade' => 'Grade 12',
+                'e_book_type_id' => 2,
+                'file_format' => 'YOUTUBE',
+                'file_path' => 'https://www.youtube.com/embed/1Fi2b8Qj4Lk',
+                'file_name' => 'physics_video_lessons',
+            ],
+            [
+                'title' => 'Biology Audio Guide',
+                'author' => 'Charles Darwin',
+                'description' => 'Audio guide for biology.',
+                'cover_image_url' => 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca',
+                'grade' => 'Grade 10',
+                'e_book_type_id' => 3,
+                'file_format' => 'YOUTUBE',
+                'file_path' => 'https://www.youtube.com/embed/2Vv-BfVoq4g',
+                'file_name' => 'biology_audio_guide',
+            ],
+            [
+                'title' => 'Programming with Python',
+                'author' => 'Guido van Rossum',
+                'description' => 'Learn Python programming.',
+                'cover_image_url' => 'https://images.unsplash.com/photo-1516979187457-637abb4f9353',
+                'grade' => 'Grade 12',
+                'e_book_type_id' => 1,
+                'file_format' => 'PDF',
+                'file_path' => 'https://www.orimi.com/pdf-test.pdf',
+                'file_name' => 'programming_with_python.pdf',
+            ],
+            [
+                'title' => 'Music Theory Audio',
+                'author' => 'Ludwig Beethoven',
+                'description' => 'Audio lessons on music theory.',
+                'cover_image_url' => 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b99',
+                'grade' => 'Grade 9',
+                'e_book_type_id' => 3,
+                'file_format' => 'YOUTUBE',
+                'file_path' => 'https://www.youtube.com/embed/JGwWNGJdvx8',
+                'file_name' => 'music_theory_audio',
+            ],
+        ];
+
+        // Seed physical books
+        foreach ($physicalBooks as $item) {
+            $bookItem = BookItem::firstOrCreate(
+                [
+                    'title' => $item['title'],
+                    'author' => $item['author'],
+                ],
                 [
                     'description' => $item['description'],
                     'cover_image_url' => $item['cover_image_url'],
-                    'grade' => $item['grade'],
+                    'grade_id' => $grades->random()->id,
                     'library_id' => $libraries->random()->id,
                     'shelf_id' => $shelves->random()->id,
                     'category_id' => $categories->random()->id,
@@ -82,8 +146,65 @@ class BookItemSeeder extends Seeder
                     'subject_id' => $subjects->random()->id,
                 ]
             );
+
+            // Create 3-5 copies for each BookItem
+            $copies = rand(3, 5);
+            for ($i = 0; $i < $copies; $i++) {
+                Book::firstOrCreate(
+                    [
+                        'book_item_id' => $bookItem->id,
+                        'isbn' => '978-' . rand(1000000000, 9999999999),
+                    ],
+                    [
+                        'edition' => rand(1, 5) . (rand(0, 1) ? 'th' : '') . ' Edition',
+                        'title' => $item['title'],
+                        'pages' => rand(100, 500),
+                        'is_borrowable' => rand(0, 10) > 2,
+                        'is_reserved' => rand(0, 1),
+                        'library_id' => $libraries->random()->id,
+                        'shelf_id' => $shelves->random()->id,
+                        'publication_year' => now()->subYears(rand(0, 10))->format('Y'),
+                    ]
+                );
+            }
         }
-        
-        $this->command->info('Book items seeded successfully.');
+
+        // Seed ebooks
+        foreach ($ebooks as $item) {
+            $bookItem = BookItem::firstOrCreate(
+                [
+                    'title' => $item['title'],
+                    'author' => $item['author'],
+                ],
+                [
+                    'description' => $item['description'],
+                    'cover_image_url' => $item['cover_image_url'],
+                    'grade_id' => $grades->random()->id,
+                    'library_id' => $libraries->random()->id,
+                    'shelf_id' => $shelves->random()->id,
+                    'category_id' => $categories->random()->id,
+                    'language_id' => $languages->random()->id,
+                    'subject_id' => $subjects->random()->id,
+                ]
+            );
+
+            EBook::firstOrCreate(
+                [
+                    'book_item_id' => $bookItem->id,
+                    'file_name' => $item['file_name'],
+                ],
+                [
+                    'file_path' => $item['file_path'],
+                    'file_format' => $item['file_format'],
+                    'isbn' => 'E-' . rand(1000000000, 9999999999),
+                    'file_size_mb' => rand(1, 50) + (rand(0, 99) / 100),
+                    'pages' => rand(50, 600),
+                    'is_downloadable' => rand(0, 10) > 3,
+                    'e_book_type_id' => $item['e_book_type_id'],
+                ]
+            );
+        }
+
+        $this->command->info('Book items, books, and ebooks seeded successfully.');
     }
 }

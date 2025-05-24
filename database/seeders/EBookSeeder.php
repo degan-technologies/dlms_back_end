@@ -2,54 +2,59 @@
 
 namespace Database\Seeders;
 
-use App\Models\BookItem;
-use App\Models\EBook;
-use App\Models\EbookType;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
 
-class EbookSeeder extends Seeder
+
+class EBookSeeder extends Seeder
 {
-    public function run(): void
+    public function run()
     {
-        $this->command->info('Seeding ebooks...');
-
-        // Get necessary related models
-        $bookItems = BookItem::all();
-        $ebookTypes = EbookType::all();
-
-        // Check if we have the necessary data
-        if ($bookItems->isEmpty() || $ebookTypes->isEmpty()) {
-            $this->command->warn('Missing required data for Ebook seeder. Please seed related tables first.');
-            return;
-        }
-
-        // File formats
-        $formats = ['PDF', 'EPUB', 'MOBI', 'AZW', 'DOC'];
-
-        // For each book item, create an ebook version (for about 70% of books)
-        foreach ($bookItems as $bookItem) {
-            // 70% chance to create an ebook
-            if (rand(1, 10) <= 7) {
-                $format = $formats[array_rand($formats)];
-                $title = str_replace(' ', '_', $bookItem->title);
-                
-                EBook::firstOrCreate(
-                    [
-                        'book_item_id' => $bookItem->id,
-                    ],
-                    [
-                        'file_path' => "/storage/ebooks/{$title}.{$format}",
-                        'file_format' => $format,
-                        'file_name' => "{$title}.{$format}",
-                        'isbn' => 'E-' . rand(1000000000, 9999999999),                        'file_size_mb' => rand(1, 50) + (rand(0, 99) / 100),
-                        'pages' => rand(50, 600),
-                        'is_downloadable' => rand(0, 10) > 3, // 70% chance to be downloadable
-                        'e_book_type_id' => $ebookTypes->random()->id,
-                    ]
-                );
-            }
-        }
-        
-        $this->command->info('Ebooks seeded successfully.');
+        DB::table('e_books')->insert([
+            [
+                'file_path'      => 'ebooks/sample_ebook_1.pdf',
+                'file_format'    => 'pdf',
+                'file_name'      => 'Sample Ebook 1',
+                'isbn'           => '9781234567890',
+                'file_size_mb'   => 2.5,
+                'pages'          => 120,
+                'is_downloadable'=> true,
+                'user_id'        => 1,
+                'book_item_id'   => 1,
+                'e_book_type_id' => 1,
+                'created_at'     => Carbon::now(),
+                'updated_at'     => Carbon::now(),
+            ],
+            [
+                'file_path'      => 'ebooks/sample_ebook_2.pdf',
+                'file_format'    => 'pdf',
+                'file_name'      => 'Sample Ebook 2',
+                'isbn'           => '9780987654321',
+                'file_size_mb'   => 1.8,
+                'pages'          => 85,
+                'is_downloadable'=> false,
+                'user_id'        => 2,
+                'book_item_id'   => 2,
+                'e_book_type_id' => 2,
+                'created_at'     => Carbon::now(),
+                'updated_at'     => Carbon::now(),
+            ],
+            [
+                'file_path'      => 'ebooks/sample_ebook_3.pdf',
+                'file_format'    => 'pdf',
+                'file_name'      => 'Sample Ebook 3',
+                'isbn'           => null,
+                'file_size_mb'   => 3.2,
+                'pages'          => 200,
+                'is_downloadable'=> true,
+                'user_id'        => 1,
+                'book_item_id'   => 3,
+                'e_book_type_id' => 1,
+                'created_at'     => Carbon::now(),
+                'updated_at'     => Carbon::now(),
+            ],
+        ]);
     }
 }

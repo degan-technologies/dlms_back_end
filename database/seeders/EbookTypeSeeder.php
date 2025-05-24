@@ -11,18 +11,8 @@ class EbookTypeSeeder extends Seeder
     {
         $ebookTypes = [
             ['name' => 'PDF'],
-            ['name' => 'EPUB'],
-            ['name' => 'MOBI'],
-            ['name' => 'AZW (Kindle)'],
-            ['name' => 'IBA (Apple iBooks)'],
-            ['name' => 'FB2'],
-            ['name' => 'DJVU'],
-            ['name' => 'LIT'],
-            ['name' => 'HTML'],
-            ['name' => 'TXT'],
-            ['name' => 'RTF'],
-            ['name' => 'DOC/DOCX'],
-            ['name' => 'CBZ/CBR (Comics)'],
+            ['name' => 'AUDIO'],
+            ['name' => 'VIDEO'],
         ];
 
         foreach ($ebookTypes as $type) {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Fine;
 use Illuminate\Http\Request;
 use App\Http\Resources\Fine\FineResource;
+use Illuminate\Support\Facades\Log;
 
 class FineController extends Controller
 {
@@ -25,9 +26,9 @@ class FineController extends Controller
         if ($filters) {
             $query->where(function ($q) use ($filters) {
                 $q->where('reason', 'like', "%$filters%")
-                  ->orWhere('fine_amount', 'like', "%$filters%")
-                  ->orWhere('user_id', 'like', "%$filters%")
-                  ->orWhere('loan_id', 'like', "%$filters%");
+                    ->orWhere('fine_amount', 'like', "%$filters%")
+                    ->orWhere('user_id', 'like', "%$filters%")
+                    ->orWhere('loan_id', 'like', "%$filters%");
             });
         }
 
@@ -58,7 +59,7 @@ class FineController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'library_branch_id' => 'required|integer|exists:library_branches,id',
+            'library_id' => 'required|integer|exists:libraries,id',
             'user_id'           => 'required|integer|exists:users,id',
             'loan_id'           => 'required|integer|exists:loans,id',
             'fine_amount'       => 'required|numeric',
@@ -66,7 +67,20 @@ class FineController extends Controller
             'reason'            => 'nullable|string',
             'payment_date'      => 'nullable|date',
             'payment_status'    => 'required|string|in:Unpaid,Paid',
+            'receipt_path'      => 'nullable|file|mimes:jpg,jpeg,png,pdf',
         ]);
+
+        // Handle file upload if present
+        if ($request->hasFile('receipt_path')) {
+            $file = $request->file('receipt_path');
+            $path = $file->store('receipts', 'public');
+            $validated['receipt_path'] = $path;
+        }
+
+        // Convert payment_status to boolean
+        if (array_key_exists('payment_status', $validated)) {
+            $validated['payment_status'] = $validated['payment_status'] === 'Paid' ? true : false;
+        }
 
         $fine = Fine::create($validated);
 
@@ -80,31 +94,54 @@ class FineController extends Controller
     {
         $fine = Fine::findOrFail($id);
         return new FineResource($fine);
-
     }
 
     /**
-     * Update an existing fine.
+     * Update only payment_date, payment_status, and receipt_path of a fine.
      */
     public function update(Request $request, $id)
     {
+        $debug = [];
         $fine = Fine::findOrFail($id);
 
+        $debug['request_all'] = $request->all();
+        $debug['request_files'] = $request->allFiles();
+        $debug['hasFile'] = $request->hasFile('receipt_path');
+
         $validated = $request->validate([
-            'library_branch_id' => 'required|integer|exists:library_branches,id',
-            'user_id'           => 'required|integer|exists:users,id',
-            'loan_id'           => 'required|integer|exists:loans,id',
-            'fine_amount'       => 'required|numeric',
-            'fine_date'         => 'required|date',
-            'reason'            => 'nullable|string',
-            'payment_date'      => 'nullable|date',
-            'payment_status'    => 'required|string|in:Unpaid,Paid',
+            'payment_date'   => 'nullable|date',
+            'payment_status' => 'nullable|string|in:Unpaid,Paid',
+            'receipt_path' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
         ]);
 
-        $fine->update($validated);
+        $debug['validated'] = $validated;
 
-        return new FineResource($fine);
+        // Always handle file upload and set path if present
+        if ($request->hasFile('receipt_path')) {
+            $file = $request->file('receipt_path');
+            $path = $file->store('receipts', 'public');
+            $validated['receipt_path'] = $path;
+            $debug['stored_path'] = $path;
+        }
+
+        if (array_key_exists('payment_status', $validated)) {
+            $validated['payment_status'] = $validated['payment_status'] === 'Paid' ? true : false;
+        }
+
+        if (count($validated)) {
+            $fine->forceFill($validated)->save();
+            $debug['updated_fine'] = $fine->toArray();
+        } else {
+            $debug['message'] = 'No valid fields to update.';
+        }
+
+        // Return debug info alongside resource data
+        return response()->json([
+            'data' => new FineResource($fine->fresh()),
+            'debug' => $debug,
+        ]);
     }
+
 
     /**
      * Soft‑delete a fine.

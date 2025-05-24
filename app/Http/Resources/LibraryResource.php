@@ -17,8 +17,8 @@ class LibraryResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'address' => $this->address,
             'contactNumber' => $this->contact_number,
+            'libraryBranchId' => $this->library_branch_id,
             'createdAt' => $this->created_at?->toDateTimeString(),
             'updatedAt' => $this->updated_at?->toDateTimeString(),
         ];

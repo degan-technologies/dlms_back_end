@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Notifications\DatabaseNotification;
 
 class User extends Authenticatable {
     use HasApiTokens;
@@ -27,6 +28,12 @@ class User extends Authenticatable {
         'password',
         'remember_token',
     ];
+
+    public function grade()
+{
+    return $this->belongsTo(Grade::class);
+}
+
 
     public function libraryBranch() {
         return $this->belongsTo(LibraryBranch::class);
@@ -62,5 +69,23 @@ class User extends Authenticatable {
     }
     public function reservations() {
         return $this->hasMany(Reservation::class);
+    }
+    // app/Models/User.php
+
+public function notifications()
+{
+    return $this->morphMany(DatabaseNotification::class, 'notifiable')->orderBy('created_at', 'desc');
+}
+
+public function unreadNotifications()
+{
+    return $this->notifications()->whereNull('read_at');
+}
+ public function section(){
+        return $this->belongsTo(Section::class);
+    }
+
+    public function ebookReadings() {
+        return $this->hasMany(EbookReading::class);
     }
 }

@@ -13,12 +13,18 @@ class Student extends Model {
         'first_name',
         'last_name',
         'adress',
-        'grade',
-        'section',
-        'gender'
+        'section_id',
+        'gender',
+        'grade_id',
     ];
 
     public function user() {
         return $this->belongsTo(User::class, 'user_id');
+    }
+    public function grade() {
+        return $this->belongsTo(Grade::class);
+    }
+    public function section() {
+        return $this->belongsTo(Section::class);
     }
 }

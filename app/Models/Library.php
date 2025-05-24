@@ -15,10 +15,7 @@ class Library extends Model
     {
         return $this->belongsTo(LibraryBranch::class );
     }
-    public function sections()
-    {
-        return $this->hasMany(Section::class);
-    }
+    
 
     public function shelves()
     {

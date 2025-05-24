@@ -1,17 +1,18 @@
 <?php
 
-namespace App\Http\Requests\V1\ReadingList;
+namespace App\Http\Requests\ChatMessage;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateReadingListRequest extends FormRequest
+class StoreChatMessageRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        // User must be authenticated to create a chat message
+        return auth()->check();
     }
 
     /**
@@ -22,10 +23,9 @@ class UpdateReadingListRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'is_public' => 'nullable|boolean',
-            'metadata' => 'nullable|array',
+            'e_book_id' => 'required|exists:e_books,id',
+            'question' => 'required|string',
+            'is_anonymous' => 'sometimes|boolean'
         ];
     }
 }
