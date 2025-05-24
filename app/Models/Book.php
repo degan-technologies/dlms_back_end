@@ -20,12 +20,15 @@ class Book extends Model
         'book_item_id',
         'shelf_id',
         'library_id',
+        'is_reserved',
+        'publication_year',
     ];
 
    
     protected $casts = [
         'is_borrowable' => 'boolean',
         'pages' => 'integer',
+        'is_reserved' => 'boolean',
     ];
 
     
@@ -54,4 +57,5 @@ class Book extends Model
     {
         return $this->hasMany(Reservation::class);
     }
+
 }

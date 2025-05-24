@@ -13,6 +13,8 @@ class CreateBooksTable extends Migration {
             $table->string('title')->nullable();
             $table->integer('pages')->nullable();
             $table->boolean('is_borrowable')->default(true); 
+            $table->boolean('is_reserved')->default(false);
+            $table->year('publication_year')->nullable();
             $table->timestamps();
             $table->softDeletes();
             
@@ -32,6 +34,8 @@ class CreateBooksTable extends Migration {
                   ->constrained('libraries')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
+
+            
         });
     }
 

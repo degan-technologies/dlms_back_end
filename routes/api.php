@@ -1,123 +1,164 @@
 <?php
 
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\API\AuthController;
-use App\Http\Controllers\API\LibraryBranchController;
-use App\Http\Controllers\API\LibraryController;
-use App\Http\Controllers\StaffController;
-use App\Http\Controllers\StudentController;
-use App\Http\Controllers\API\SectionController;
-use App\Http\Controllers\Api\V1\BookItemController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\V1\BookController;
-use App\Http\Controllers\API\V1\EBookController;
-use App\Http\Controllers\API\V1\PublisherController;
-use App\Http\Controllers\API\V1\AssetTypeController;
-use App\Http\Controllers\API\V1\GradeController;
-use App\Http\Controllers\API\V1\LanguageController;
-use App\Http\Controllers\API\V1\CategoryController;
-use App\Http\Controllers\API\V1\OtherAssetController;
-use App\Http\Controllers\API\V1\ChatMessageController;
-use App\Http\Controllers\API\V1\LoanController;
-use App\Http\Controllers\API\V1\BookmarkController;
-use App\Http\Controllers\API\V1\NoteController;
-use App\Http\Controllers\API\V1\ReadingListController;
-use App\Http\Controllers\API\V1\RecentlyViewedController;
-use App\Http\Controllers\API\V1\HomePageController;
-// 🔓 Public routes
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
-Route::get('/home-page-data', [HomePageController::class, 'getHomePageData']);
+use App\Http\Controllers\Bookmark\BookmarkController;
+use App\Http\Controllers\Note\NoteController;
+use App\Http\Controllers\ChatMessage\ChatMessageController;
+use App\Http\Controllers\RecentlyViewed\RecentlyViewedController;
+use App\Http\Controllers\Collection\CollectionController;
+use App\Http\Controllers\BookItem\BookItemController;
+use App\Http\Controllers\Book\BookController;
+use App\Http\Controllers\EBook\EBookController;
+use App\Http\Controllers\Constant\ConstantController;
+use App\Http\Controllers\Language\LanguageController;
+use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\LoanController;
+use App\Http\Controllers\FineController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReservationController;
 
-// 🔐 Protected routes
-Route::middleware(['auth:api'])->group(function () {
 
-    Route::get('/book/item', [BookItemController::class, 'index']);
-    Route::get('/book/item/{bookItem}/related', [BookItemController::class, 'related']);
-    Route::get('/book-items/new-arrivals', [BookItemController::class, 'newArrivals']);
-    Route::get('/book-items/{bookItem}', [BookItemController::class, 'show']);
+// 1. Public Routes
+Route::post('login', [AuthController::class, 'login']);
+Route::post('register', [AuthController::class, 'register']);
 
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', [AuthController::class, 'user']);
+// Public book item routes
+Route::get('new-arrivals', [BookItemController::class, 'newArrivals']);
+Route::get('featured-books', [BookItemController::class, 'featured']);
+Route::get('physical-books', [BookItemController::class, 'physicalBooks']);
+Route::get('physical-books/{book_item}', [BookItemController::class, 'showPhysicalBook']);
+Route::get('ebooks', [BookItemController::class, 'ebooks']);
+Route::get('ebooks/{book_item}', [BookItemController::class, 'showEbook']);
 
-    // User bookmarks routes
+// Constants & filters for frontend
+Route::prefix('constants')->group(function () {
+    Route::get('all', [ConstantController::class, 'getAllFilters']);
+    Route::get('categories', [ConstantController::class, 'categories']);
+    Route::post('/categories', [ConstantController::class, 'createCategory']);
+    Route::put('/categories/{id}', [ConstantController::class, 'updateCategory']);
+    Route::delete('/categories/{id}', [ConstantController::class, 'deleteCategory']);
+    Route::post('/categories/delete-multiple', [ConstantController::class, 'deleteMultipleCategories']);
+
+    // Language endpoints
+    Route::get('languages', [ConstantController::class, 'languageIndex']);
+    Route::post('languages', [ConstantController::class, 'languageStore']);
+    Route::get('languages/{language}', [ConstantController::class, 'languageShow']);
+    Route::put('languages/{language}', [ConstantController::class, 'languageUpdate']);
+    Route::delete('languages/{language}', [ConstantController::class, 'languageDestroy']);
+    Route::post('languages/delete-multiple', [ConstantController::class, 'languageDestroyMultiple']);
+
+    // Subject endpoints
+    Route::get('subjects', [ConstantController::class, 'subjectIndex']);
+    Route::post('subjects', [ConstantController::class, 'storeSubject']);
+    Route::get('subjects/{subject}', [ConstantController::class, 'subjectShow']);
+    Route::put('subjects/{subject}', [ConstantController::class, 'subjectUpdate']);
+    Route::delete('subjects/{subject}', [ConstantController::class, 'subjectDestroy']);
+    Route::post('subjects/delete-multiple', [ConstantController::class, 'subjectDestroyMultiple']);
+
+    Route::get('ebook-types', [ConstantController::class, 'ebookTypes']);
+    Route::get('grades', [ConstantController::class, 'grades']);
+});
+
+// 2. Authenticated User Routes
+Route::middleware('auth:api')->group(function () {
+    Route::get('user', [AuthController::class, 'user']);
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/{notification}', [NotificationController::class, 'show']);
+    Route::post('/{notification}/read', [NotificationController::class, 'markAsRead'])
+         ->name('notifications.read');
+    Route::post('notifications/{id}', [NotificationController::class, 'markAsRead']);
+    Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::delete('notifications/{id}', [NotificationController::class, 'deleteNotification']);
+
+    Route::post('logout', [AuthController::class, 'logout']);
+    Route::get('book-items', [BookItemController::class, 'index']);
+    Route::post('book-items', [BookItemController::class, 'store']);
+    Route::put('book-items/{book_item}', [BookItemController::class, 'update']);
+    Route::delete('book-items/{book_item}', [BookItemController::class, 'destroy']);
+    Route::post('book-items/delete-multiple', [BookItemController::class, 'destroyMultiple']);
+
+    // Bookmarks
     Route::apiResource('bookmarks', BookmarkController::class);
-
-    // User notes routes
+    // Notes
     Route::apiResource('notes', NoteController::class);
-    Route::get('notes-search', [NoteController::class, 'search']);
-
-    // User reading lists routes
-    Route::apiResource('reading-lists', ReadingListController::class);
-    Route::post('reading-lists/{readingList}/add-book', [ReadingListController::class, 'addBookItem']);
-    Route::delete('reading-lists/{readingList}/remove-book', [ReadingListController::class, 'removeBookItem']);
-
-    // Recently viewed resources routes
+    // Chat Messages
+    Route::apiResource('chat-messages', ChatMessageController::class);
+    // Recently Viewed
     Route::get('recently-viewed', [RecentlyViewedController::class, 'index']);
-    Route::post('recently-viewed/track', [RecentlyViewedController::class, 'trackView']);
-    Route::delete('recently-viewed/clear', [RecentlyViewedController::class, 'clearAll']);
-    Route::delete('recently-viewed/{recentlyViewed}', [RecentlyViewedController::class, 'destroy']);
+    Route::post('recently-viewed', [RecentlyViewedController::class, 'store']);
 
-    // AI Chat with books routes
-    Route::get('book-items/{bookItem}/chat-messages', [ChatMessageController::class, 'index']);
-    Route::post('book-items/{bookItem}/chat-messages', [ChatMessageController::class, 'store']);
-    Route::get('chat-messages/{chatMessage}', [ChatMessageController::class, 'show']);
-    Route::delete('chat-messages/{chatMessage}', [ChatMessageController::class, 'destroy']);
-
-    // 📚 both Super Admin and admin - full access
-    Route::middleware('role:super-admin|admin')->group(function () {
-        Route::Resource('/libraries', LibraryController::class);
-        Route::apiResource('/sections', SectionController::class);
-        Route::resource('staff', StaffController::class);
-        Route::post('staff/bulk', [StaffController::class, 'storeBulk']);
-        Route::resource('students', StudentController::class);
-        Route::post('/students/batch', [StudentController::class, 'batchStore']);
-        Route::get('/users', [AuthController::class, 'allUsers']);
-        Route::put('/user', [AuthController::class, 'updateUser']);
-        Route::post('/user', [AuthController::class, 'changePassword']);
-        // AI Chat with books routes
-        Route::get('book-items/{bookItem}/chat-messages', [ChatMessageController::class, 'index']);
-        Route::post('book-items/{bookItem}/chat-messages', [ChatMessageController::class, 'store']);
-        Route::get('chat-messages/{chatMessage}', [ChatMessageController::class, 'show']);
-        Route::delete('chat-messages/{chatMessage}', [ChatMessageController::class, 'destroy']);
-    });
-
-    // 📚 Super Admin - full access
-    Route::middleware('role:superadmin')->group(function () {
-        Route::resource('/branches', LibraryBranchController::class);
-        Route::resource('admins', AdminController::class);
-    });
-
-    // Admin-only routes
-    Route::middleware('role:admin|librarian')->group(function () {
-        // Resource management routes
-        Route::apiResource('books', BookController::class);
-        Route::apiResource('book-items', BookItemController::class);
-        Route::apiResource('ebooks', EBookController::class);
-        Route::apiResource('publishers', PublisherController::class);
-        Route::apiResource('asset-types', AssetTypeController::class);
-        Route::apiResource('grades', GradeController::class);
-        Route::apiResource('languages', LanguageController::class);
-        Route::apiResource('categories', CategoryController::class);
-        Route::apiResource('other-assets', OtherAssetController::class);
-    });
-
-    // Librarian-only routes
-    Route::middleware('role:librarian')->group(function () {
-        // librarian routes
-        Route::apiResource('books', BookController::class)->only(['index', 'show']);
-        Route::apiResource('book-items', BookItemController::class)->only(['index', 'show']);
-        Route::apiResource('ebooks', EBookController::class)->only(['index', 'show']);
-    });
-
-    // 👨‍🏫 Staff
-    Route::middleware('role:staff')->group(function () {
-        // Route::resource('staff', StaffController::class);
-    });
-
-    // 🎓 Student
+    // 3. Student Role
     Route::middleware('role:student')->group(function () {
-        // Route::resource('students', StudentController::class);
+        // Collections (own only)
+        Route::apiResource('collections', CollectionController::class);
+        Route::post('collections/{collection}/add-ebook', [CollectionController::class, 'addEbook']);
+        Route::post('collections/{collection}/remove-ebook', [CollectionController::class, 'removeEbook']);
+        // Read-only access to book items, books, ebooks
 
+        Route::get('book-items/{book_item}', [BookItemController::class, 'show']);
+        // Route::get('books', [BookController::class, 'index']);
+        // Route::get('books/{book}', [BookController::class, 'show']);
+        Route::get('ebooks', [EBookController::class, 'index']);
+        Route::get('ebooks/{ebook}', [EBookController::class, 'show']);
+        // Reading lists (legacy)
+        // Route::get('reading-lists', ...);
     });
+
+    // 4. Teacher Role
+    Route::middleware('role:teacher')->group(function () {
+        // CRUD collections
+        Route::apiResource('collections', CollectionController::class);
+        Route::post('collections/{collection}/add-ebook', [CollectionController::class, 'addEbook']);
+        Route::post('collections/{collection}/remove-ebook', [CollectionController::class, 'removeEbook']);
+        // CRUD ebooks
+        Route::apiResource('ebooks', EBookController::class);
+        // Read-only access to book items, books
+
+        Route::get('book-items/{book_item}', [BookItemController::class, 'show']);
+        // Route::get('books', [BookController::class, 'index']);
+        // Route::get('books/{book}', [BookController::class, 'show']);
+    });
+
+    // 5. Librarian Role
+    Route::middleware('role:librarian')->group(function () {
+        // CRUD books, ebooks, book items
+        Route::apiResource('books', BookController::class);
+        Route::apiResource('ebooks', EBookController::class);
+        Route::apiResource('loans', LoanController::class);
+        Route::get('fines', [FineController::class, 'index']);
+        Route::get('fines/{fine}', [FineController::class, 'show']);
+        Route::post('fines', [FineController::class, 'store']);
+        Route::put('fines/{fine}', [FineController::class, 'update']);
+        Route::delete('fines/{fine}', [FineController::class, 'destroy']);
+
+        // Route::apiResource('book-items', BookItemController::class);
+        // CRUD collections
+        Route::apiResource('collections', CollectionController::class);
+    });
+
+    // 6. Admin Role
+    Route::middleware('role:admin')->group(function () {
+        // Full access to all resources
+        // Route::apiResource('books', BookController::class);
+        Route::apiResource('ebooks', EBookController::class);
+        // Route::apiResource('book-items', BookItemController::class);
+        Route::apiResource('collections', CollectionController::class);
+        // Libraries, sections, users, publishers, asset types, shelves, etc.
+        // Route::apiResource('libraries', LibraryController::class);
+        // Route::apiResource('sections', SectionController::class);
+        // Route::apiResource('users', UserController::class);
+        // ...add other admin resources
+    });
+
+    // 7. Superadmin Role
+    Route::middleware('role:superadmin')->group(function () {
+        // Branch management, admin user management
+        // Route::apiResource('branches', BranchController::class);
+        // Route::apiResource('admins', AdminController::class);
+        // ...inherits all admin privileges
+    });
+
+    Route::apiResource('reservations', ReservationController::class);
 });

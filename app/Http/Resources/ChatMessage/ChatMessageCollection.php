@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Resources\V1\ChatMessage;
+namespace App\Http\Resources\ChatMessage;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class ChatMessageCollection extends ResourceCollection
@@ -9,10 +10,9 @@ class ChatMessageCollection extends ResourceCollection
     /**
      * Transform the resource collection into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array|\Illuminate\Contracts\Support\Arrayable|\JsonSerializable
+     * @return array<int|string, mixed>
      */
-    public function toArray($request)
+    public function toArray(Request $request): array
     {
         return [
             'data' => $this->collection,
@@ -22,6 +22,13 @@ class ChatMessageCollection extends ResourceCollection
                 'per_page' => $this->resource->perPage(),
                 'current_page' => $this->resource->currentPage(),
                 'total_pages' => $this->resource->lastPage(),
+                'next_page_url' => $this->resource->nextPageUrl(),
+                'prev_page_url' => $this->resource->previousPageUrl(),
+                'from' => $this->resource->firstItem(),
+                'to' => $this->resource->lastItem(),
+            ],
+            'links' => [
+                'self' => url()->current(),
             ],
         ];
     }

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\V1\Note;
+namespace App\Http\Requests\RecentlyViewed;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateNoteRequest extends FormRequest
+class StoreRecentlyViewedRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,12 +22,7 @@ class UpdateNoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'content' => 'nullable|string',
-            'page_number' => 'nullable|integer|min:1',
-            'position' => 'nullable|string',
-            'highlight_text' => 'nullable|string',
-            'color' => 'nullable|string|max:30',
-            'metadata' => 'nullable|array',
+            'e_book_id' => 'required|exists:e_books,id',
         ];
     }
 }

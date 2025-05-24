@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Http\Resources\Loan\LoanResource;
 use App\Models\Loan;
 use Illuminate\Http\Request;
@@ -26,15 +27,15 @@ class LoanController extends Controller
             $query->where(function ($q) use ($filters) {
                 $q->whereHas('bookItem', function ($subQuery) use ($filters) {
                     $subQuery->where('title', 'like', "%$filters%")
-                             ->orWhere('author', 'like', "%$filters%");
+                        ->orWhere('author', 'like', "%$filters%");
                 })
-                ->orWhere('borrow_date', 'like', "%$filters%")
-                ->orWhere('due_date', 'like', "%$filters%");
+                    ->orWhere('borrow_date', 'like', "%$filters%")
+                    ->orWhere('due_date', 'like', "%$filters%");
             });
         }
 
         if ($status) {
-            $query->where('return_date', $status === 'Returned' ? '!=' : '=', null);
+            $query->where('returned_date', $status === 'Returned' ? '!=' : '=', null);
         }
 
         if ($dateRange && is_array($dateRange) && count($dateRange) === 2) {
@@ -60,14 +61,14 @@ class LoanController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'book_item_id' => 'required|integer',
+            'book_id' => 'required|integer',
             'borrow_date' => 'required|date',
             'due_date' => 'required|date',
             'return_date' => 'nullable|date',
-            'library_branch_id' => 'required|integer',
+            'library_id' => 'required|integer',
         ]);
 
-        $validatedData['student_id'] = Auth::id();
+        $validatedData['user_id'] = Auth::id();
         $loan = Loan::create($validatedData);
         return new LoanResource($loan);
     }
@@ -82,21 +83,16 @@ class LoanController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update only the returned_date of the loan.
      */
     public function update(Request $request, $id)
     {
         $validatedData = $request->validate([
-            'student_id' => 'required|integer',
-            'book_item_id' => 'required|integer',
-            'borrow_date' => 'required|date',
-            'due_date' => 'required|date',
-            'return_date' => 'nullable|date',
-            'library_branch_id' => 'required|integer',
+            'returned_date' => 'required|date',
         ]);
 
         $loan = Loan::findOrFail($id);
-        $loan->update($validatedData);
+        $loan->update(['returned_date' => $validatedData['returned_date']]);
         return new LoanResource($loan);
     }
 

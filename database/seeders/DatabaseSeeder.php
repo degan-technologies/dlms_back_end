@@ -21,15 +21,17 @@ class DatabaseSeeder extends Seeder
             ShelfSeeder::class,
             LanguageSeeder::class,
             SubjectSeeder::class,
+            GradeSeeder::class,
+            SectionSeeder::class,
             EbookTypeSeeder::class,
             NotificationTypeSeeder::class,
             RoleSeeder::class,
             
             // Books and related items
             BookItemSeeder::class,
-            BookSeeder::class,
             BookConditionSeeder::class,
-            EbookSeeder::class,
+            
+            // Loan and reservation related
             LoanSeeder::class,
             FineSeeder::class,
             ReservationSeeder::class,

@@ -6,18 +6,32 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateNotificationTypesTable extends Migration
 {
-    public function up(): void
-    {
-        Schema::create('notification_types', function (Blueprint $table) {
-            $table->id();             // id
-            $table->enum('type', ['Due Reminder','Return Alert']);
-            $table->timestamps();
-            $table->softDeletes();
-        });
-    }
+public function up(): void
+{
+    Schema::create('notifications', function (Blueprint $table) {
+        // Use UUIDs for the primary key:
+        $table->uuid('id')->primary();
 
-    public function down(): void
-    {
-        Schema::dropIfExists('notification_types');
-    }
+        // Notification class name (e.g. App\Notifications\LoanStatusAlert)
+        $table->string('type');
+
+        // Polymorphic relation: which model was notified
+        $table->morphs('notifiable');
+
+        // JSON payload for your notification data
+        $table->text('data');
+
+        // Mark when (if ever) the user read it
+        $table->timestamp('read_at')->nullable();
+
+        // Timestamps for created_at / updated_at
+        $table->timestamps();
+    });
+}
+
+public function down(): void
+{
+    Schema::dropIfExists('notifications');
+}
+
 }

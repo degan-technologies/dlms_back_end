@@ -15,10 +15,15 @@ class Student extends Model {
         'adress',
         'grade',
         'section',
-        'gender'
+        'gender',
+        'grade_id',
     ];
 
     public function user() {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function grade() {
+        return $this->belongsTo(Grade::class);
     }
 }
