@@ -12,10 +12,38 @@ class LoanController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $loans = Loan::all();
-        return LoanResource::collection($loans);
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+        $search = $request->input('search', null);
+
+        $query = Loan::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('borrow_date', 'like', "%$search%")
+                    ->orWhere('due_date', 'like', "%$search%")
+                    ->orWhere('returned_date', 'like', "%$search%")
+                    ->orWhere('book_id', 'like', "%$search%")
+                    ->orWhere('user_id', 'like', "%$search%")
+                    ->orWhere('library_id', 'like', "%$search%")
+                    ->orWhere('book_item_id', 'like', "%$search%")
+                ;
+            });
+        }
+
+        $loans = $query->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'data' => LoanResource::collection($loans),
+            'meta' => [
+                'total_records' => $loans->total(),
+                'per_page' => $loans->perPage(),
+                'current_page' => $loans->currentPage(),
+                'total_pages' => $loans->lastPage(),
+            ],
+        ]);
     }
 
     /**
@@ -28,7 +56,7 @@ class LoanController extends Controller
             'borrow_date' => 'required|date',
             'due_date' => 'required|date',
             'return_date' => 'nullable|date',
-            'library_branch_id' => 'required|integer',
+            'library_id' => 'required|integer',
         ]);
 
         $validatedData['student_id'] = Auth::id();
