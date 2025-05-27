@@ -45,7 +45,8 @@ class LibraryBranchController extends Controller
             'location' => [
                 'required',
                 'string',
-                'regex:/^(https?:\/\/)?(www\.)?(google\.com\/maps|goo\.gl\/maps)\/[^\s]+$/', // Accept Google Maps URLs
+                // Accept Google Maps URLs or embed iframe
+                'regex:/^(<iframe\s+.*src="https:\/\/www\.google\.com\/maps\/embed\?pb=[^"]+".*<\/iframe>|(https?:\/\/)?(www\.)?(google\.com\/maps|goo\.gl\/maps)\/[^\s]+)$/s',
             ],
         ]);
 
@@ -81,7 +82,8 @@ class LibraryBranchController extends Controller
             'location' => [
                 'required',
                 'string',
-                'regex:/^(https?:\/\/)?(www\.)?(google\.com\/maps|goo\.gl\/maps)\/[^\s]+$/', // Accept Google Maps URLs
+                // Accept Google Maps URLs or embed iframe
+                'regex:/^(<iframe\s+.*src="https:\/\/www\.google\.com\/maps\/embed\?pb=[^"]+".*<\/iframe>|(https?:\/\/)?(www\.)?(google\.com\/maps|goo\.gl\/maps)\/[^\s]+)$/s',
             ],
         ]);
 

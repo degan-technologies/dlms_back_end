@@ -42,7 +42,7 @@ class BookItem extends Model {
 
 
     public function library(): BelongsTo {
-        return $this->belongsTo(library::class);
+        return $this->belongsTo(Library::class);
     }
 
 
