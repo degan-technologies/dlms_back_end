@@ -1,5 +1,3 @@
-
-
 <?php
 
 use App\Http\Controllers\API\AuthController;
@@ -100,6 +98,12 @@ Route::middleware('auth:api')->group(function () {
     Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
     Route::delete('notifications/{id}', [NotificationController::class, 'deleteNotification']);
+
+    Route::post('reservations', [ReservationController::class, 'store']);
+    Route::get('reservations', [ReservationController::class, 'index']);
+    Route::get('reservations/{reservation}', [ReservationController::class, 'show']);
+    Route::put('reservations/{reservation}', [ReservationController::class, 'update']);
+    Route::delete('reservations/{reservation}', [ReservationController::class, 'destroy']);
 
     Route::get('/user', [AuthController::class, 'user']);
     Route::get('category',[DashboardController::class,'index']);

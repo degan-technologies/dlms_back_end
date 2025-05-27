@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+
 use Carbon\Carbon;
 
 
@@ -19,7 +19,7 @@ class EBookSeeder extends Seeder
 
                 'file_size_mb'   => 2.5,
                 'pages'          => 120,
-                'is_downloadable'=> true,
+                'is_downloadable' => true,
                 'user_id'        => 1,
                 'book_item_id'   => 1,
                 'e_book_type_id' => 1,
@@ -32,7 +32,7 @@ class EBookSeeder extends Seeder
 
                 'file_size_mb'   => 1.8,
                 'pages'          => 85,
-                'is_downloadable'=> false,
+                'is_downloadable' => false,
                 'user_id'        => 2,
                 'book_item_id'   => 2,
                 'e_book_type_id' => 2,
@@ -45,7 +45,7 @@ class EBookSeeder extends Seeder
 
                 'file_size_mb'   => 3.2,
                 'pages'          => 200,
-                'is_downloadable'=> true,
+                'is_downloadable' => true,
                 'user_id'        => 1,
                 'book_item_id'   => 3,
                 'e_book_type_id' => 1,
