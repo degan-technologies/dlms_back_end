@@ -8,7 +8,7 @@ use App\Models\Staff;
 use Illuminate\Database\Seeder;
 use Database\Seeders\LoanSeeder;
 
-class DatabaseSeeder extends Seeder
+class DatabaseSeeder  extends Seeder
 {
     /**
      * Seed the application's database.

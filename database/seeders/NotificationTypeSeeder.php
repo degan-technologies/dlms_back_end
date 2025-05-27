@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\NotificationType;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class NotificationTypeSeeder extends Seeder
 {
@@ -12,11 +13,18 @@ class NotificationTypeSeeder extends Seeder
         $types = [
             ['type' => 'Due Reminder'],
             ['type' => 'Return Alert'],
+            ['type' => 'General Notification'],
         ];
 
         foreach ($types as $type) {
             NotificationType::firstOrCreate(
-                ['type' => $type['type']]
+                ['type' => $type['type']],
+                [
+                    'id' => Str::uuid()->toString(),
+                    'data' => '{}',
+                    'notifiable_type' => 'App\\User', // or another model
+                    'notifiable_id' => 1
+                ]
             );
         }
 

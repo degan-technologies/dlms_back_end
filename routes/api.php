@@ -20,7 +20,8 @@ use App\Http\Controllers\EBook\EBookFileController;
 use App\Http\Controllers\Constant\ConstantController;
 use App\Http\Controllers\DashboardStatsController;
 use App\Http\Controllers\StaffController;
-use App\Http\Controllers\StudentController;use App\Http\Controllers\Language\LanguageController;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\Language\LanguageController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\FineController;
@@ -161,7 +162,7 @@ Route::middleware('auth:api')->group(function () {
     // 4. Teacher Role
     Route::middleware('role:teacher')->group(function () {
         // CRUD ebooks
-        
+
         // Read-only access to book items, books
 
         // Route::get('books', [BookController::class, 'index']);
@@ -174,7 +175,7 @@ Route::middleware('auth:api')->group(function () {
         // Route::apiResource('books', BookController::class);
         // Route::apiResource('ebooks', EBookController::class);
         // Route::apiResource('book-items', BookItemController::class);
-       
+
         Route::apiResource('loans', LoanController::class);
         Route::get('fines', [FineController::class, 'index']);
         Route::get('fines/{fine}', [FineController::class, 'show']);
@@ -191,7 +192,7 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('role:admin')->group(function () {
         // Full access to all resources
         // // Route::apiResource('books', BookController::class);
-       
+
         // Route::apiResource('book-items', BookItemController::class);
         // Libraries, sections, users, publishers, asset types, shelves, etc.
         // Route::apiResource('libraries', LibraryController::class);
@@ -208,6 +209,9 @@ Route::middleware('auth:api')->group(function () {
         // Route::apiResource('branches', BranchController::class);
         // Route::apiResource('admins', AdminController::class);
         // ...inherits all admin privileges
+
+        Route::resource('/branches', LibraryBranchController::class)->except(['index']);
+        Route::delete('/bulkdelete', [LibraryBranchController::class, 'bulkDelete']);
     });
 
     //8.both admin and super admin

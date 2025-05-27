@@ -16,6 +16,7 @@ class EBookSeeder extends Seeder
             [
                 'file_path'      => 'ebooks/sample_ebook_1.pdf',
                 'file_name'      => 'Sample Ebook 1',
+
                 'file_size_mb'   => 2.5,
                 'pages'          => 120,
                 'is_downloadable' => true,
@@ -28,6 +29,7 @@ class EBookSeeder extends Seeder
             [
                 'file_path'      => 'ebooks/sample_ebook_2.pdf',
                 'file_name'      => 'Sample Ebook 2',
+
                 'file_size_mb'   => 1.8,
                 'pages'          => 85,
                 'is_downloadable' => false,
@@ -40,6 +42,7 @@ class EBookSeeder extends Seeder
             [
                 'file_path'      => 'ebooks/sample_ebook_3.pdf',
                 'file_name'      => 'Sample Ebook 3',
+
                 'file_size_mb'   => 3.2,
                 'pages'          => 200,
                 'is_downloadable' => true,
