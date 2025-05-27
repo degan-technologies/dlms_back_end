@@ -8,7 +8,7 @@ class CreateNotificationTypesTable extends Migration
 {
 public function up(): void
 {
-    Schema::create('notifications', function (Blueprint $table) {
+    Schema::create('notification_types', function (Blueprint $table) {
         // Use UUIDs for the primary key:
         $table->uuid('id')->primary();
 
@@ -23,6 +23,9 @@ public function up(): void
 
         // Mark when (if ever) the user read it
         $table->timestamp('read_at')->nullable();
+
+        // Add soft deletes support
+        $table->softDeletes();
 
         // Timestamps for created_at / updated_at
         $table->timestamps();

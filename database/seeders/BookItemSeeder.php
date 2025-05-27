@@ -180,7 +180,6 @@ class BookItemSeeder extends Seeder
                     'file_name' => strtolower(str_replace(' ', '_', $title)) . "_ebook{$k}.pdf",
                     'user_id' => $user->id,
                     'file_path' => 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-                    'file_format' => 'PDF',
                     'file_size_mb' => rand(1, 50) + (rand(0, 99) / 100),
                     'pages' => rand(50, 600),
                     'is_downloadable' => rand(0, 1),

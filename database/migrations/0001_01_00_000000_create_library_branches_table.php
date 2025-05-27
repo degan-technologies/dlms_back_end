@@ -12,12 +12,12 @@ class CreateLibraryBranchesTable extends Migration
             $table->id();
             $table->string('branch_name');
             $table->string('address');
-            $table->string('location');
+            $table->text('location');
             $table->string('contact_number', 20);
             $table->string('email');
             $table->json('library_time')->nullable();
 
-           
+
             $table->timestamps();
             $table->softDeletes();
         });
