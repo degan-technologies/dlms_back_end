@@ -4,7 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateNotificationTypesTable extends Migration
+// Migration for notification_types table
+
+return new class extends Migration
 {
     public function up(): void
     {
@@ -22,4 +24,4 @@ class CreateNotificationTypesTable extends Migration
     {
         Schema::dropIfExists('notification_types');
     }
-}
+};

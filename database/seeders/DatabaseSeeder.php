@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             SectionSeeder::class,
             EbookTypeSeeder::class,
             RoleSeeder::class,
+            BookItemSeeder::class,
             EBookSeeder::class,
             EbookReadingSeeder::class,
 
@@ -33,7 +34,6 @@ class DatabaseSeeder extends Seeder
             AskLibrarianSeeder::class,
 
             // Books and related items
-            BookItemSeeder::class,
             BookConditionSeeder::class,
 
             // Loan and reservation related

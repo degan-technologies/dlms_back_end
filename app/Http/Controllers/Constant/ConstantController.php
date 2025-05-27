@@ -169,7 +169,7 @@ class ConstantController extends Controller {
     }
     public function libraries() {
         return Cache::remember('libraries', 60 * 30, function () {
-            $user = auth()->user();
+            $user = Auth::user();
             // Get the user's library branch and its related libraries
             $libraryBranch = $user ? $user->libraryBranch : null;
             $libraries = $libraryBranch ? $libraryBranch->library()->get()->unique('id')->values() : collect();
@@ -180,7 +180,7 @@ class ConstantController extends Controller {
 
     public function shelves() {
         return Cache::remember('shelves', 60 * 30, function () {
-            $user = auth()->user();
+            $user = Auth::user();
             // Get the user's library branch and its related libraries
             $libraryBranch = $user ? $user->libraryBranch : null;
             $shelves = $libraryBranch && $libraryBranch->library

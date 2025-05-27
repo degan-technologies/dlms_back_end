@@ -4,8 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateEBooksTable extends Migration {
-    public function up(): void {
+class CreateEBooksTable extends Migration
+{
+    public function up(): void
+    {
         Schema::create('e_books', function (Blueprint $table) {
             $table->id();
             $table->string('file_path', 512);
@@ -16,12 +18,6 @@ class CreateEBooksTable extends Migration {
 
             $table->timestamps();
             $table->softDeletes();
-
-            // Foreign key to the user who uploaded the e-book
-            $table->foreignId('user_id');
-                //   ->constrained('users');
-
-
             // Foreign key constraint
             $table->foreignId('book_item_id')
                 ->references('id')
@@ -33,7 +29,7 @@ class CreateEBooksTable extends Migration {
                 ->constrained('e_book_types')
                 ->onDelete('restrict')
                 ->onUpdate('cascade');
-                
+
             $table->foreignId('user_id')
                 ->constrained('users')
                 ->onDelete('restrict')
@@ -41,7 +37,8 @@ class CreateEBooksTable extends Migration {
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('e_books');
     }
 }
