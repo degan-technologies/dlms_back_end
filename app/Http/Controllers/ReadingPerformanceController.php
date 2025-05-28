@@ -29,7 +29,7 @@ class ReadingPerformanceController extends Controller
 
         switch ($role) {
             case 'superadmin':
-                $loanCounts = $this->getBookLoanCounts();
+                $loanCounts = $this->getBookLoanCounts(); 
                 $ebookCounts = $this->getEBookReadCounts();
                 break;
 

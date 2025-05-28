@@ -14,28 +14,28 @@ class EbookReadingSeeder extends Seeder
     {
         DB::table('ebook_readings')->insert([
             [
-                'user_id' => 1,
+                'user_id' => 5,
                 'ebook_id' => 1,
                 'read_count' => 3,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'user_id' => 1,
+                'user_id' => 5,
                 'ebook_id' => 2,
                 'read_count' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'user_id' => 2,
+                'user_id' => 4,
                 'ebook_id' => 1,
                 'read_count' => 2,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'user_id' => 2,
+                'user_id' => 5,
                 'ebook_id' => 3,
                 'read_count' => 5,
                 'created_at' => now(),

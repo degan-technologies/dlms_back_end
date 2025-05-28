@@ -9,114 +9,35 @@ use Illuminate\Support\Facades\Auth;
 
 class LoanController extends Controller
 {
-
-    public function history(Request $request)
-    {
-        $perPage = $request->input('per_page', 6); // Default to 10 per page
-        $page = $request->input('page', 1);
-        $user = Auth::user();
-        $role = $user->roles[0]->name;
-
-        // Initialize query with relationships
-        $query = Loan::with(['user', 'book', 'user.libraryBranch']);
-
-        // Apply role-based filters
-        switch($role) {
-            case 'superadmin':
-                // Superadmin can see all loans across branches
-                break;
-            
-            case 'admin':
-                // Admin can only see loans from their library branch
-                $query->whereHas('user', function($q) use ($user) {
-                    $q->where('library_branch_id', $user->library_branch_id);
-                });
-                break;
-            
-            case 'librarian':
-                // Librarian can only see loans from their library
-                $query->whereHas('user', function($q) use ($user) {
-                    $q->where('library_branch_id', $user->library_branch_id);
-                });
-                break;
-            
-            default:
-                // For other roles, only show their own loans
-                $query->where('user_id', $user->id);
-                break;
-        }
-
-        // Additional user_id filter if provided
-        if ($request->has('user_id') && ($role === 'superadmin' || $role === 'admin')) {
-            $query->where('user_id', $request->input('user_id'));
-        }
-
-        $loans = $query->orderBy('borrow_date', 'desc')->paginate($perPage, ['*'], 'page', $page);
-
-        // Add status to each loan
-        $history = $loans->getCollection()->map(function ($loan) {
-            return [
-                'loan_id'      => $loan->id,
-                'user'         => $loan->user,
-                'book'         => $loan->book,
-                'borrow_date'  => $loan->borrow_date,
-                'due_date'     => $loan->due_date,
-                'returned_date'=> $loan->returned_date,
-                'status'       => $loan->returned_date ? 'returned' : 'not returned',
-            ];
-        });
-
-        // Replace the collection with the mapped history
-        $loans->setCollection($history);
-
-        return response()->json([
-            'data' => $loans->items(),
-            'pagination' => [
-                'total_records' => $loans->total(),
-                'per_page' => $loans->perPage(),
-                'current_page' => $loans->currentPage(),
-                'total_pages' => $loans->lastPage(),
-            ],
-        ]);
-    }
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $perPage = $request->input('per_page', 10); // Accept `per_page` from the request, default to 10
-        $page = $request->input('page', 1); // Accept `page` from the request, default to 1
-        $filters = $request->input('filter', null); // Accept `filter` from the request
-        $status = $request->input('status', null); // Accept `status` from the request
-        $dateRange = $request->input('dateRange', null); // Accept `dateRange` from the request
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+        $search = $request->input('search', null);
 
         $query = Loan::query();
 
-        // Apply filters if provided
-        if ($filters) {
-            $query->where(function ($q) use ($filters) {
-                $q->whereHas('bookItem', function ($subQuery) use ($filters) {
-                    $subQuery->where('title', 'like', "%$filters%")
-                        ->orWhere('author', 'like', "%$filters%");
-                })
-                    ->orWhere('borrow_date', 'like', "%$filters%")
-                    ->orWhere('due_date', 'like', "%$filters%");
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('borrow_date', 'like', "%$search%")
+                    ->orWhere('due_date', 'like', "%$search%")
+                    ->orWhere('returned_date', 'like', "%$search%")
+                    ->orWhere('book_id', 'like', "%$search%")
+                    ->orWhere('user_id', 'like', "%$search%")
+                    ->orWhere('library_id', 'like', "%$search%")
+                    ->orWhere('book_item_id', 'like', "%$search%")
+                ;
             });
-        }
-
-        if ($status) {
-            $query->where('returned_date', $status === 'Returned' ? '!=' : '=', null);
-        }
-
-        if ($dateRange && is_array($dateRange) && count($dateRange) === 2) {
-            $query->whereBetween('borrow_date', [$dateRange[0], $dateRange[1]]);
         }
 
         $loans = $query->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'data' => LoanResource::collection($loans),
-            'pagination' => [
+            'meta' => [
                 'total_records' => $loans->total(),
                 'per_page' => $loans->perPage(),
                 'current_page' => $loans->currentPage(),
@@ -131,14 +52,14 @@ class LoanController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'book_id' => 'required|integer',
+            'book_item_id' => 'required|integer',
             'borrow_date' => 'required|date',
             'due_date' => 'required|date',
             'return_date' => 'nullable|date',
             'library_id' => 'required|integer',
         ]);
 
-        $validatedData['user_id'] = Auth::id();
+        $validatedData['student_id'] = Auth::id();
         $loan = Loan::create($validatedData);
         return new LoanResource($loan);
     }
@@ -153,16 +74,29 @@ class LoanController extends Controller
     }
 
     /**
-     * Update only the returned_date of the loan.
+     * Update the specified resource in storage.
      */
     public function update(Request $request, $id)
     {
         $validatedData = $request->validate([
+            'user_id' => 'nullable|integer',
+            'book_id' => 'required|integer',
             'returned_date' => 'required|date',
+            'library_id' => 'nullable|integer',
         ]);
 
         $loan = Loan::findOrFail($id);
-        $loan->update(['returned_date' => $validatedData['returned_date']]);
+        $loan->update($validatedData);
+
+        // Set the related book's is_reserved to 0 (false) if returned
+        if (!empty($validatedData['returned_date']) && $loan->book_id) {
+            $book = \App\Models\Book::find($loan->book_id);
+            if ($book) {
+                $book->is_reserved = 0;
+                $book->save();
+            }
+        }
+
         return new LoanResource($loan);
     }
 

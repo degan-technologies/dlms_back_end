@@ -119,6 +119,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('my-collections/{collection}', [CollectionController::class, 'myCollectionShow']);
     Route::post('collections/{collection}/add-ebook', [CollectionController::class, 'addEbook']);
 
+    Route::post('reservations', [ReservationController::class, 'store']);
+    Route::get('reservations', [ReservationController::class, 'index']);
+    Route::get('reservations/{reservation}', [ReservationController::class, 'show']);
+    Route::put('reservations/{reservation}', [ReservationController::class, 'update']);
+    Route::delete('reservations/{reservation}', [ReservationController::class, 'destroy']);
+
 
     // EBooks CRUD
     Route::resource('ebooks', EBookController::class);
@@ -211,6 +217,9 @@ Route::middleware('auth:api')->group(function () {
         // Route::apiResource('branches', BranchController::class);
         // Route::apiResource('admins', AdminController::class);
         // ...inherits all admin privileges
+
+        Route::resource('/branches', LibraryBranchController::class)->except(['index']);
+        Route::delete('/bulkdelete', [LibraryBranchController::class, 'bulkDelete']);
     });
 
     //8.both admin and super admin
