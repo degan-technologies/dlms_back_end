@@ -170,16 +170,34 @@ class BookItemSeeder extends Seeder
 
             // Create 5 EBooks for this BookItem
             for ($k = 1; $k <= 5; $k++) {
-                EBook::create([
-                    'book_item_id' => $bookItem->id,
-                    'file_name' => strtolower(str_replace(' ', '_', $title)) . "_ebook{$k}.pdf",
-                    'user_id' => $user->id,
-                    'file_path' => 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-                    'file_size_mb' => rand(1, 50) + (rand(0, 99) / 100),
-                    'pages' => rand(50, 600),
-                    'is_downloadable' => rand(0, 1),
-                    'e_book_type_id' => rand(1, 3),
-                ]);
+                $isPdf = $k % 2 === 1;
+                if ($isPdf) {
+                    // PDF EBook (type 1)
+                    EBook::create([
+                        'book_item_id' => $bookItem->id,
+                        'file_path' => 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+                        'file_name' => strtolower(str_replace(' ', '_', $title)) . "_ebook{$k}.pdf",
+                        'file_size_mb' => rand(1, 50) + (rand(0, 99) / 100),
+                        'pages' => rand(50, 600),
+                        'is_downloadable' => rand(0, 1),
+                        'e_book_type_id' => 1, // PDF
+                        'user_id' => $user->id,
+                        // No sent_at for PDF
+                    ]);
+                } else {
+                    // Video EBook (type 2)
+                    EBook::create([
+                        'book_item_id' => $bookItem->id,
+                        'file_path' => 'https://www.youtube.com/embed/1Fi2b8Qj4Lk',
+                        'file_name' => strtolower(str_replace(' ', '_', $title)) . "_ebook{$k}_video",
+                        'file_size_mb' => rand(1, 50) + (rand(0, 99) / 100),
+                        // No pages for video
+                        'is_downloadable' => rand(0, 1),
+                        'e_book_type_id' => 2, // Video
+                        'user_id' => $user->id,
+                        // Only for video, sent_at is not in fillable, so skip
+                    ]);
+                }
             }
         }
 

@@ -61,21 +61,33 @@ class ChatMessageSeeder extends Seeder
         foreach ($users as $user) {
             // Generate 0-5 chat messages per user
             $messageCount = rand(0, 5);
-            
-            // Get random ebooks for messages
-            $userEbooks = $ebooks->random(min($messageCount, $ebooks->count()));
-            
+            // Only use ebooks with type 1 (PDF) or 2 (Video)
+            $validEbooks = $ebooks->whereIn('e_book_type_id', [1, 2]);
+            if ($validEbooks->isEmpty()) continue;
+            $userEbooks = $validEbooks->random(min($messageCount, $validEbooks->count()));
             foreach ($userEbooks as $ebook) {
-                // 30% chance to include highlight text
-                $includeHighlight = (rand(1, 10) <= 3);
-                  ChatMessage::create([
+                $isPdf = $ebook->e_book_type_id == 1;
+                $isVideo = $ebook->e_book_type_id == 2;
+                $data = [
                     'user_id' => $user->id,
                     'e_book_id' => $ebook->id,
-                    'highlight_text' => $includeHighlight ? $highlightTexts[array_rand($highlightTexts)] : null,
                     'question' => $questions[array_rand($questions)],
                     'ai_response' => $aiResponses[array_rand($aiResponses)],
-                    'is_anonymous' => rand(0, 1) == 1, // 50% chance to be anonymous
-                ]);
+                    'is_anonymous' => rand(0, 1) == 1,
+                ];
+                if ($isPdf) {
+                    // PDF: page_number and highlight_text only
+                    $data['page_number'] = rand(1, 100);
+                    $includeHighlight = (rand(1, 10) <= 3);
+                    $data['highlight_text'] = $includeHighlight ? $highlightTexts[array_rand($highlightTexts)] : null;
+                    $data['sent_at'] = null;
+                } elseif ($isVideo) {
+                    // Video: sent_at only
+                    $data['sent_at'] = now();
+                    $data['page_number'] = null;
+                    $data['highlight_text'] = null;
+                }
+                ChatMessage::create($data);
             }
         }
         

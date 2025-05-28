@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\NotificationType;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class NotificationTypeSeeder extends Seeder
 {
@@ -17,15 +16,9 @@ class NotificationTypeSeeder extends Seeder
         ];
 
         foreach ($types as $type) {
-            NotificationType::firstOrCreate(
-                ['type' => $type['type']],
-                [
-                    'id' => Str::uuid()->toString(),
-                    'data' => '{}',
-                    'notifiable_type' => 'App\\User', // or another model
-                    'notifiable_id' => 1
-                ]
-            );
+            NotificationType::firstOrCreate([
+                'type' => $type['type']
+            ]);
         }
 
         $this->command->info('Notification types seeded successfully.');
