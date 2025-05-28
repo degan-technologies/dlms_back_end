@@ -10,25 +10,42 @@ class CreateBookItemsTable extends Migration
     {
         Schema::create('book_items', function (Blueprint $table) {
             $table->id();
-            $table->string('isbn',20)->nullable();
-            $table->string('item_type',20);
-            $table->string('availability_status',20);
+            $table->string('title', 255)->unique();
+            $table->string('author', 255)->nullable();
+            $table->text('description')->nullable(); 
+            $table->string('cover_image')->nullable(); 
             $table->timestamps();
             $table->softDeletes();
 
-    
 
-            $table->foreignId('library_branch_id')
-                  ->constrained('library_branches')
+            // Foreign keys
+            $table->foreignId('library_id')
+                  ->constrained('libraries')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
-
-            $table->foreignId('shelf_id')
-                  ->constrained('shelves')
-                  ->onDelete('restrict')
-                  ->onUpdate('cascade');
+                  
             $table->foreignId('category_id')
                   ->constrained('categories')
+                  ->onDelete('restrict')
+                  ->onUpdate('cascade');
+            $table->foreignId('language_id')
+                  ->constrained('languages')
+                  ->onDelete('restrict')
+                  ->onUpdate('cascade');
+
+
+            $table->foreignId('subject_id')
+                  ->nullable()
+                  ->constrained('subjects')
+                  ->onDelete('restrict')
+                  ->onUpdate('cascade');
+            $table->foreignId('grade_id')
+                  ->nullable()
+                  ->constrained('grades')
+                  ->onDelete('restrict')
+                  ->onUpdate('cascade');
+            $table->foreignId('user_id')
+                  ->constrained('users')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
         });
@@ -39,4 +56,3 @@ class CreateBookItemsTable extends Migration
         Schema::dropIfExists('book_items');
     }
 }
-

@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -7,22 +8,37 @@ class CreateEBooksTable extends Migration
 {
     public function up(): void
     {
-        Schema::create('ebooks', function (Blueprint $table) {
+        Schema::create('e_books', function (Blueprint $table) {
             $table->id();
-            $table->string('author', 255)->nullable();
-            $table->string('isbn', 20);
-            $table->string('file_url', 512);
-            $table->string('file_format', 10)->nullable();
+            $table->string('file_path', 512);
+            $table->string('file_name', 255)->nullable();
+            $table->float('file_size_mb')->nullable();
+            $table->integer('pages')->nullable();
+            $table->boolean('is_downloadable')->default(true);
+
             $table->timestamps();
             $table->softDeletes();
+            // Foreign key constraint
+            $table->foreignId('book_item_id')
+                ->references('id')
+                ->on('book_items')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
 
-            $table->foreignId('book_item_id')->constrained('book_items')->onDelete('restrict')->onUpdate('cascade');
-           
+            $table->foreignId('e_book_type_id')
+                ->constrained('e_book_types')
+                ->onDelete('restrict')
+                ->onUpdate('cascade');
+
+            $table->foreignId('user_id')
+                ->constrained('users')
+                ->onDelete('restrict')
+                ->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('ebooks');
+        Schema::dropIfExists('e_books');
     }
 }

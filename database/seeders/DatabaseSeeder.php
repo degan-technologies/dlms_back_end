@@ -2,26 +2,51 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\EBook;
+use App\Models\Loan;
+use App\Models\Staff;
 use Illuminate\Database\Seeder;
+use Database\Seeders\LoanSeeder;
 
-class DatabaseSeeder extends Seeder
+class DatabaseSeeder  extends Seeder
 {
     /**
      * Seed the application's database.
-     */
-    public function run(): void
+     */    public function run(): void
     {
-        // User::factory(10)->create();
-
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
         $this->call([
-            LibrarySeeder::class,
+            // Base tables
             LibraryBranchSeeder::class,
+            LibrarySeeder::class,
+            CategorySeeder::class,
+            ShelfSeeder::class,
+            LanguageSeeder::class,
+            SubjectSeeder::class,
+            GradeSeeder::class,
+            SectionSeeder::class,
+            EbookTypeSeeder::class,
+            RoleSeeder::class,
+            BookItemSeeder::class,
+            EBookSeeder::class,
+            EbookReadingSeeder::class,
+
+            NotificationTypeSeeder::class,
+            AskLibrarianSeeder::class,
+
+            // Books and related items
+            BookConditionSeeder::class,
+
+            // Loan and reservation related
+            LoanSeeder::class,
+            FineSeeder::class,
+            ReservationSeeder::class,
+
+            // User content
+            BookmarkSeeder::class,
+            NoteSeeder::class,
+            ChatMessageSeeder::class,
+            RecentlyViewedSeeder::class,
+            CollectionSeeder::class,
         ]);
     }
 }

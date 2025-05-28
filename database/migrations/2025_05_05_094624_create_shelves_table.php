@@ -10,19 +10,18 @@ class CreateShelvesTable extends Migration
     {
         Schema::create('shelves', function (Blueprint $table) {
             $table->id();
-            $table->string('ShelfCode',20)->unique();
+            $table->string('code', 20)->unique();
+            $table->string('location')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreignId('section_id')
-                  ->constrained('sections')
-                  ->onDelete('restrict')
-                  ->onUpdate('cascade');
 
-            $table->foreignId('library_branch_id')
-                  ->constrained('library_branches')
+            $table->foreignId('library_id')
+                  ->constrained('libraries')
                   ->onDelete('restrict')
                   ->onUpdate('cascade');
+                  
+            $table->index('code');
         });
     }
 

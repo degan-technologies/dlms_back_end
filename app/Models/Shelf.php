@@ -2,21 +2,46 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Shelf extends Model
 {
-    use SoftDeletes;
-    protected $primaryKey = 'ShelfID';
-    protected $fillable = ['shelf_code','section_id','library_branch_id'];
+    use HasFactory, SoftDeletes;
 
-    public function section()
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'code',
+        'location',
+        'library_id'
+    ];
+
+    
+
+    
+
+    /**
+     * Get the library branch that owns this shelf.
+     */
+    public function library(): BelongsTo
     {
-        return $this->belongsTo(Section::class, 'section_id');
+        return $this->belongsTo(Library::class);
     }
-    public function branch()
+
+    /**
+     * Get the book items stored on this shelf.
+     */
+    public function books(): HasMany
     {
-        return $this->belongsTo(LibraryBranch::class, 'library_branch_id');
+        return $this->hasMany(Book::class);
     }
+    
+
 }

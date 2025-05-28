@@ -8,12 +8,14 @@ class CreateNotificationTypesTable extends Migration
 {
     public function up(): void
     {
-        Schema::create('notification_types', function (Blueprint $table) {
-            $table->id();             // id
-            $table->enum('type', ['Due Reminder','Return Alert']);
-            $table->timestamps();
-            $table->softDeletes();
-        });
+        if (!Schema::hasTable('notification_types')) {
+            Schema::create('notification_types', function (Blueprint $table) {
+                $table->id();
+                $table->string('type')->unique();
+                $table->softDeletes();
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void
