@@ -5,13 +5,10 @@ namespace Database\Seeders;
 use App\Models\EbookType;
 use Illuminate\Database\Seeder;
 
-class EbookTypeSeeder extends Seeder
-{
-    public function run(): void
-    {
+class EbookTypeSeeder extends Seeder {
+    public function run(): void {
         $ebookTypes = [
             ['name' => 'PDF'],
-            ['name' => 'AUDIO'],
             ['name' => 'VIDEO'],
         ];
 
