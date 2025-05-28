@@ -24,7 +24,7 @@ class StoreBookmarkRequest extends FormRequest
     {
         return [
             'e_book_id' => 'required|exists:e_books,id',
-            'title' => 'required|string|max:255',
+            
         ];
     }
 }

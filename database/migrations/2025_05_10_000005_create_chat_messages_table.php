@@ -17,6 +17,8 @@ return new class extends Migration
             $table->text('highlight_text')->nullable(); 
             $table->longText('question');
             $table->longText('ai_response');
+            $table->integer('page_number')->nullable();
+            $table->timestamp('sent_at')->nullable();
             $table->boolean('is_anonymous')->default(false);
             $table->timestamps();
             $table->softDeletes();

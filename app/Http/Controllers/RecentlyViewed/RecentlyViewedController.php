@@ -16,35 +16,61 @@ class RecentlyViewedController extends Controller
 {
     /**
      * Display a listing of the recently viewed items for the authenticated user.
-     */
-    public function index(Request $request)
+     */    public function index(Request $request)
     {
         $query = RecentlyViewed::query();
-          // Only show the current user's recently viewed items
+        
+        // Only show the current user's recently viewed items
         $query->where('user_id', Auth::id());
+        
+        // Always load ebook relationship with all required relationships
+        $query->with([
+            'ebook.bookmarks', 
+            'ebook.notes', 
+            'ebook.chatMessages', 
+            'ebook.collections',
+            'ebook.ebookType'
+        ]);
+        
+        // Also include interaction counts
+        $query->with(['ebook' => function($q) {
+            $q->withCount(['bookmarks', 'notes', 'chatMessages', 'collections']);
+        }]);
         
         // Apply filters if provided
         if ($request->has('e_book_id')) {
             $query->where('e_book_id', $request->e_book_id);
         }
         
-        // Include relationships if requested
+        // Include additional relationships if requested
         if ($request->has('with')) {
             $relationships = explode(',', $request->with);
-            $allowedRelations = ['ebook', 'user'];
-            $query->with(array_intersect($relationships, $allowedRelations));
+            $allowedRelations = ['ebook', 'user', 'ebook.bookItem', 'ebook.bookItem.category', 'ebook.bookItem.subject', 'ebook.bookItem.grade', 'ebook.bookItem.language'];
             
-            // Special case for nested relationships
-            if (in_array('ebook.bookItem', $relationships)) {
-                $query->with('ebook.bookItem');
+            // Build relationships array
+            $relationsToLoad = [
+                'ebook.bookmarks', 
+                'ebook.notes', 
+                'ebook.chatMessages', 
+                'ebook.collections',
+                'ebook.ebookType'
+            ]; // Always include ebook interaction relationships
+            
+            foreach ($relationships as $relation) {
+                if (in_array($relation, $allowedRelations) && !in_array($relation, $relationsToLoad)) {
+                    $relationsToLoad[] = $relation;
+                }
             }
+            
+            $query->with($relationsToLoad);
         }
         
         // Sort by last_viewed_at in descending order (most recent first)
         $query->orderBy('last_viewed_at', 'desc');
         
-        // Get the results
-        $recentlyViewed = $query->get();
+        // Limit to exactly 5 recently viewed ebooks
+        $limit = $request->get('limit', 5);
+        $recentlyViewed = $query->limit($limit)->get();
         
         return new RecentlyViewedCollection($recentlyViewed);
     }
@@ -88,11 +114,18 @@ class RecentlyViewedController extends Controller
                         ->delete();
                 }
             }
-            
-            DB::commit();
+              DB::commit();
             
             // Load relationships for the response
-            $recentlyViewed->load('ebook.bookItem');
+            $recentlyViewed->load([
+                'ebook.bookmarks', 
+                'ebook.notes', 
+                'ebook.chatMessages', 
+                'ebook.collections',
+                'ebook.ebookType',
+                'ebook.bookItem'
+            ]);
+            $recentlyViewed->loadCount(['ebook.bookmarks', 'ebook.notes', 'ebook.chatMessages', 'ebook.collections']);
             
             return new RecentlyViewedResource($recentlyViewed);
         } catch (\Exception $e) {
