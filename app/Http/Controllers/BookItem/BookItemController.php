@@ -422,6 +422,7 @@ class BookItemController extends Controller {    public function index(Request $
 
     /**
      * Advanced search for BookItems, returning both digital and physical formats distinctly.
+     * This method allows searching by title, author, description, and filtering by various attributes.
      */
     public function search(Request $request)
     {
