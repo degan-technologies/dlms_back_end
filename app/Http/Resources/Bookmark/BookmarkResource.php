@@ -22,7 +22,6 @@ class BookmarkResource extends JsonResource
             'title' => $this->title,
             'created_at' => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,
             'updated_at' => $this->updated_at ? $this->updated_at->format('Y-m-d H:i:s') : null,
-            
             // Include the ebook details when loaded
             'ebook' => $this->whenLoaded('ebook', function() {
                 return [
@@ -32,9 +31,12 @@ class BookmarkResource extends JsonResource
                     'cover_image_url' => $this->ebook->bookItem->cover_image_url ?? null,
                     'file_format' => $this->ebook->file_format,
                     'is_downloadable' => $this->ebook->is_downloadable,
+                    'ebook_type' => $this->ebook->relationLoaded('ebookType') && $this->ebook->ebookType ? [
+                        'id' => $this->ebook->ebookType->id,
+                        'name' => $this->ebook->ebookType->name,
+                    ] : null,
                 ];
             }),
-            
             // Include user details when loaded
             'user' => $this->whenLoaded('user', function() {
                 return [

@@ -15,6 +15,7 @@ class EBookFileController extends Controller
         if (!file_exists($path)) {
             abort(404);
         }
+        $allowedOrigins = ['http://localhost:5173', 'http://localhost:8000']; 
         $response = response()->file($path, [
             'Content-Type' => 'application/pdf',
             'Access-Control-Allow-Origin' => '*',
@@ -23,7 +24,7 @@ class EBookFileController extends Controller
         ]);
         // For OPTIONS preflight requests
         if (request()->getMethod() === 'OPTIONS') {
-            $response->headers->set('Access-Control-Allow-Origin', '*');
+            $response->headers->set('Access-Control-Allow-Origin', $allowedOrigins);
             $response->headers->set('Access-Control-Allow-Methods', 'GET, OPTIONS');
             $response->headers->set('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept, Authorization');
         }

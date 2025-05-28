@@ -20,8 +20,8 @@ class Note extends Model
         'e_book_id',
         'content',
         'page_number',
+        'sent_at',
         'highlight_text',
-        'metadata',
     ];
 
     /**
@@ -31,6 +31,7 @@ class Note extends Model
      */
     protected $casts = [
         'page_number' => 'integer',
+        'sent_at' => 'datetime',
     ];
 
      public function user()

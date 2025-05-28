@@ -18,7 +18,6 @@ class CollectionController extends Controller {
      */
     public function index(Request $request) {
         $query = Collection::query();
-        // Exclude collections created by users with the 'student' role
         $query->whereDoesntHave('user.roles', function ($q) {
             $q->where('name', 'student');
         });
@@ -72,6 +71,21 @@ class CollectionController extends Controller {
             if (in_array('ebooks.bookItem', $relationships)) {
                 $query->with('ebooks.bookItem');
             }
+
+            // Always load ebook interaction relationships when ebooks are loaded
+            if (in_array('ebooks', $relationships)) {
+                $query->with([
+                    'ebooks.bookmarks',
+                    'ebooks.notes',
+                    'ebooks.chatMessages',
+                    'ebooks.collections',
+                    'ebooks.ebookType',
+                    'ebooks.bookItem',
+                ]);
+                $query->with(['ebooks' => function($q) {
+                    $q->withCount(['bookmarks', 'notes', 'chatMessages', 'collections']);
+                }]);
+            }
         }
 
         // Custom sorting
@@ -82,10 +96,28 @@ class CollectionController extends Controller {
             $query->latest(); // Default sort by created_at desc
         }
 
-        // Sort by ebook count
+        // Always include comprehensive ebook counts
+        $query->withCount([
+            'ebooks',
+            'ebooks as pdf_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function($subQ) {
+                    $subQ->where('name', 'PDF');
+                });
+            },
+            'ebooks as video_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function($subQ) {
+                    $subQ->where('name', 'VIDEO');
+                });
+            },
+            'ebooks as downloadable_ebooks_count' => function ($q) {
+                $q->where('is_downloadable', true);
+            }
+        ]);
+
+        // Sort by ebook count if requested
         if ($request->has('sort_by_ebook_count')) {
             $direction = $request->has('sort_direction') && $request->sort_direction === 'asc' ? 'asc' : 'desc';
-            $query->withCount('ebooks')->orderBy('ebooks_count', $direction);
+            $query->orderBy('ebooks_count', $direction);
         }
 
         // Paginate the results
@@ -151,6 +183,21 @@ class CollectionController extends Controller {
             if (in_array('ebooks.bookItem', $relationships)) {
                 $query->with('ebooks.bookItem');
             }
+
+            // Always load ebook interaction relationships when ebooks are loaded
+            if (in_array('ebooks', $relationships)) {
+                $query->with([
+                    'ebooks.bookmarks',
+                    'ebooks.notes',
+                    'ebooks.chatMessages',
+                    'ebooks.collections',
+                    'ebooks.ebookType',
+                    'ebooks.bookItem',
+                ]);
+                $query->with(['ebooks' => function($q) {
+                    $q->withCount(['bookmarks', 'notes', 'chatMessages', 'collections']);
+                }]);
+            }
         }
 
         // Custom sorting
@@ -161,10 +208,33 @@ class CollectionController extends Controller {
             $query->latest(); // Default sort by created_at desc
         }
 
-        // Sort by ebook count
+        // Always include comprehensive ebook counts
+        $query->withCount([
+            'ebooks',
+            'ebooks as pdf_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function($subQ) {
+                    $subQ->where('name', 'PDF');
+                });
+            },
+            'ebooks as video_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function($subQ) {
+                    $subQ->where('name', 'VIDEO');
+                });
+            },
+            'ebooks as audio_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function($subQ) {
+                    $subQ->where('name', 'AUDIO');
+                });
+            },
+            'ebooks as downloadable_ebooks_count' => function ($q) {
+                $q->where('is_downloadable', true);
+            }
+        ]);
+
+        // Sort by ebook count if requested
         if ($request->has('sort_by_ebook_count')) {
             $direction = $request->has('sort_direction') && $request->sort_direction === 'asc' ? 'asc' : 'desc';
-            $query->withCount('ebooks')->orderBy('ebooks_count', $direction);
+            $query->orderBy('ebooks_count', $direction);
         }
 
         // Paginate the results
@@ -198,8 +268,31 @@ class CollectionController extends Controller {
                 $collection->ebooks()->attach($ebookIds);
             }
 
-            // Load relationships for the response
-            $collection->load('ebooks.bookItem');
+            // Always load all ebook relationships for response
+            $collection->load([
+                'ebooks.bookmarks',
+                'ebooks.notes',
+                'ebooks.chatMessages',
+                'ebooks.collections',
+                'ebooks.ebookType',
+                'ebooks.bookItem',
+                'user',
+            ]);
+            $collection->loadCount([
+                'ebooks',
+                'ebooks as pdf_ebooks_count' => function ($q) {
+                    $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'PDF'); });
+                },
+                'ebooks as video_ebooks_count' => function ($q) {
+                    $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'VIDEO'); });
+                },
+                'ebooks as audio_ebooks_count' => function ($q) {
+                    $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'AUDIO'); });
+                },
+                'ebooks as downloadable_ebooks_count' => function ($q) {
+                    $q->where('is_downloadable', true);
+                }
+            ]);
 
             DB::commit();
 
@@ -229,6 +322,59 @@ class CollectionController extends Controller {
             if (in_array('ebooks.bookItem', $relationships)) {
                 $collection->load('ebooks.bookItem');
             }
+
+            // Always load ebook interaction relationships when ebooks are loaded
+            if (in_array('ebooks', $relationships)) {
+                $collection->load([
+                    'ebooks.bookmarks',
+                    'ebooks.notes',
+                    'ebooks.chatMessages',
+                    'ebooks.collections',
+                    'ebooks.ebookType',
+                    'ebooks.bookItem',
+                    'user',
+                ]);
+                $collection->loadCount([
+                    'ebooks',
+                    'ebooks as pdf_ebooks_count' => function ($q) {
+                        $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'PDF'); });
+                    },
+                    'ebooks as video_ebooks_count' => function ($q) {
+                        $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'VIDEO'); });
+                    },
+                    'ebooks as audio_ebooks_count' => function ($q) {
+                        $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'AUDIO'); });
+                    },
+                    'ebooks as downloadable_ebooks_count' => function ($q) {
+                        $q->where('is_downloadable', true);
+                    }
+                ]);
+            }
+        } else {
+            $collection->load([
+                'ebooks.bookmarks',
+                'ebooks.notes',
+                'ebooks.chatMessages',
+                'ebooks.collections',
+                'ebooks.ebookType',
+                'ebooks.bookItem',
+                'user',
+            ]);
+            $collection->loadCount([
+                'ebooks',
+                'ebooks as pdf_ebooks_count' => function ($q) {
+                    $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'PDF'); });
+                },
+                'ebooks as video_ebooks_count' => function ($q) {
+                    $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'VIDEO'); });
+                },
+                'ebooks as audio_ebooks_count' => function ($q) {
+                    $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'AUDIO'); });
+                },
+                'ebooks as downloadable_ebooks_count' => function ($q) {
+                    $q->where('is_downloadable', true);
+                }
+            ]);
         }
 
         return new CollectionResource($collection);
@@ -242,16 +388,72 @@ class CollectionController extends Controller {
         if ($collection->user_id !== auth()->id()) {
             return response()->json(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
         }
+        
         // Include relationships if requested
         if ($request->has('with')) {
             $relationships = explode(',', $request->with);
             $allowedRelations = ['ebooks', 'user'];
             $collection->load(array_intersect($relationships, $allowedRelations));
+            
             // Special case for nested relationships
             if (in_array('ebooks.bookItem', $relationships)) {
                 $collection->load('ebooks.bookItem');
             }
+
+            // Always load ebook interaction relationships when ebooks are loaded
+            if (in_array('ebooks', $relationships)) {
+                $collection->load([
+                    'ebooks.bookmarks',
+                    'ebooks.notes',
+                    'ebooks.chatMessages',
+                    'ebooks.collections',
+                    'ebooks.ebookType',
+                    'ebooks.bookItem',
+                    'user',
+                ]);
+                $collection->loadCount([
+                    'ebooks',
+                    'ebooks as pdf_ebooks_count' => function ($q) {
+                        $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'PDF'); });
+                    },
+                    'ebooks as video_ebooks_count' => function ($q) {
+                        $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'VIDEO'); });
+                    },
+                    'ebooks as audio_ebooks_count' => function ($q) {
+                        $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'AUDIO'); });
+                    },
+                    'ebooks as downloadable_ebooks_count' => function ($q) {
+                        $q->where('is_downloadable', true);
+                    }
+                ]);
+            }
+        } else {
+            $collection->load([
+                'ebooks.bookmarks',
+                'ebooks.notes',
+                'ebooks.chatMessages',
+                'ebooks.collections',
+                'ebooks.ebookType',
+                'ebooks.bookItem',
+                'user',
+            ]);
+            $collection->loadCount([
+                'ebooks',
+                'ebooks as pdf_ebooks_count' => function ($q) {
+                    $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'PDF'); });
+                },
+                'ebooks as video_ebooks_count' => function ($q) {
+                    $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'VIDEO'); });
+                },
+                'ebooks as audio_ebooks_count' => function ($q) {
+                    $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'AUDIO'); });
+                },
+                'ebooks as downloadable_ebooks_count' => function ($q) {
+                    $q->where('is_downloadable', true);
+                }
+            ]);
         }
+        
         return new CollectionResource($collection);
     }
 
@@ -276,8 +478,30 @@ class CollectionController extends Controller {
                 $collection->ebooks()->sync($ebookIds);
             }
 
-            // Load relationships for the response
-            $collection->load('ebooks.bookItem');
+            $collection->load([
+                'ebooks.bookmarks',
+                'ebooks.notes',
+                'ebooks.chatMessages',
+                'ebooks.collections',
+                'ebooks.ebookType',
+                'ebooks.bookItem',
+                'user',
+            ]);
+            $collection->loadCount([
+                'ebooks',
+                'ebooks as pdf_ebooks_count' => function ($q) {
+                    $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'PDF'); });
+                },
+                'ebooks as video_ebooks_count' => function ($q) {
+                    $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'VIDEO'); });
+                },
+                'ebooks as audio_ebooks_count' => function ($q) {
+                    $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'AUDIO'); });
+                },
+                'ebooks as downloadable_ebooks_count' => function ($q) {
+                    $q->where('is_downloadable', true);
+                }
+            ]);
 
             DB::commit();
 
@@ -313,8 +537,30 @@ class CollectionController extends Controller {
         // Attach the ebook to the collection
         $collection->ebooks()->attach($request->e_book_id);
 
-        // Load relationships for the response
-        $collection->load('ebooks.bookItem');
+        $collection->load([
+            'ebooks.bookmarks',
+            'ebooks.notes',
+            'ebooks.chatMessages',
+            'ebooks.collections',
+            'ebooks.ebookType',
+            'ebooks.bookItem',
+            'user',
+        ]);
+        $collection->loadCount([
+            'ebooks',
+            'ebooks as pdf_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'PDF'); });
+            },
+            'ebooks as video_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'VIDEO'); });
+            },
+            'ebooks as audio_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'AUDIO'); });
+            },
+            'ebooks as downloadable_ebooks_count' => function ($q) {
+                $q->where('is_downloadable', true);
+            }
+        ]);
 
         return new CollectionResource($collection);
     }
@@ -335,8 +581,30 @@ class CollectionController extends Controller {
         // Detach the ebook from the collection
         $collection->ebooks()->detach($request->e_book_id);
 
-        // Load relationships for the response
-        $collection->load('ebooks.bookItem');
+        $collection->load([
+            'ebooks.bookmarks',
+            'ebooks.notes',
+            'ebooks.chatMessages',
+            'ebooks.collections',
+            'ebooks.ebookType',
+            'ebooks.bookItem',
+            'user',
+        ]);
+        $collection->loadCount([
+            'ebooks',
+            'ebooks as pdf_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'PDF'); });
+            },
+            'ebooks as video_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'VIDEO'); });
+            },
+            'ebooks as audio_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function($subQ) { $subQ->where('name', 'AUDIO'); });
+            },
+            'ebooks as downloadable_ebooks_count' => function ($q) {
+                $q->where('is_downloadable', true);
+            }
+        ]);
 
         return new CollectionResource($collection);
     }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\EBook;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Book\StoreBookRequest;
 use App\Http\Requests\EBook\StoreEBookRequest;
 use App\Http\Requests\EBook\UpdateEBookRequest;
 use App\Http\Resources\EBook\EBookCollection;
@@ -18,9 +17,14 @@ use Illuminate\Support\Facades\Storage;
 class EBookController extends Controller {
     /**
      * Display a listing of the resource.
-     */
-    public function index(Request $request) {
+     */    public function index(Request $request) {
         $query = EBook::query();
+
+        // Always load required relationships for EBook resource
+        $query->with(['bookmarks', 'notes', 'chatMessages', 'collections', 'ebookType']);
+        
+        // Also include interaction counts
+        $query->withCount(['bookmarks', 'notes', 'chatMessages', 'collections']);
 
         if ($request->has('book_item_id')) {
             $query->where('book_item_id', $request->book_item_id);
@@ -40,11 +44,15 @@ class EBookController extends Controller {
             });
         }
 
-        // Include relationships if requested
+        // Include additional relationships if requested
         if ($request->has('with')) {
             $relationships = explode(',', $request->with);
             $allowedRelations = ['bookItem', 'ebookType', 'bookmarks', 'notes', 'collections'];
-            $query->with(array_intersect($relationships, $allowedRelations));
+            $additionalRelations = array_diff(array_intersect($relationships, $allowedRelations), ['bookmarks', 'notes', 'chatMessages', 'collections', 'ebookType']);
+            
+            if (!empty($additionalRelations)) {
+                $query->with($additionalRelations);
+            }
 
             // Special case for bookItem.category or other nested relations
             if (in_array('bookItem.category', $relationships)) {
@@ -116,13 +124,20 @@ class EBookController extends Controller {
 
     /**
      * Display the specified resource.
-     */
-    public function show(Request $request, EBook $ebook) {
-        // Include relationships if requested
+     */    public function show(Request $request, EBook $ebook) {
+        // Always load required relationships
+        $ebook->load(['bookmarks', 'notes', 'chatMessages', 'collections', 'ebookType']);
+        $ebook->loadCount(['bookmarks', 'notes', 'chatMessages', 'collections']);
+
+        // Include additional relationships if requested
         if ($request->has('with')) {
             $relationships = explode(',', $request->with);
             $allowedRelations = ['bookItem', 'ebookType', 'bookmarks', 'notes', 'collections'];
-            $ebook->load(array_intersect($relationships, $allowedRelations));
+            $additionalRelations = array_diff(array_intersect($relationships, $allowedRelations), ['bookmarks', 'notes', 'chatMessages', 'collections', 'ebookType']);
+            
+            if (!empty($additionalRelations)) {
+                $ebook->load($additionalRelations);
+            }
 
             // Handle nested relations
             if (in_array('bookItem.category', $relationships)) {

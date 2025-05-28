@@ -1,5 +1,3 @@
-
-
 <?php
 
 use App\Http\Controllers\API\AuthController;
@@ -22,19 +20,22 @@ use App\Http\Controllers\EBook\EBookFileController;
 use App\Http\Controllers\Constant\ConstantController;
 use App\Http\Controllers\DashboardStatsController;
 use App\Http\Controllers\StaffController;
-use App\Http\Controllers\StudentController;use App\Http\Controllers\Language\LanguageController;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\Language\LanguageController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\FineController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RecentlyViewed\RecentlyViewedController;
+use App\Http\Controllers\LearningRecommendationController;
 
 // 1. Public Routes
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
 
 // Public book item routes
+Route::get('book-items/search', [BookItemController::class, 'search']);
 Route::get('new-arrivals', [BookItemController::class, 'newArrivals']);
 Route::get('featured-books', [BookItemController::class, 'featured']);
 Route::get('physical-books', [BookItemController::class, 'physicalBooks']);
@@ -90,18 +91,39 @@ Route::get('ebooks/pdf/{filename}', [EBookFileController::class, 'servePdf'])->w
 
 // 2. Authenticated User Routes
 Route::middleware('auth:api')->group(function () {
+    // User profile & auth
+    Route::post('logout', [AuthController::class, 'logout']);
     Route::get('user', [AuthController::class, 'user']);
-    Route::get('notifications', [NotificationController::class, 'index']);
-    Route::get('notifications/{notification}', [NotificationController::class, 'show']);
-    Route::post('/{notification}/read', [NotificationController::class, 'markAsRead'])
-         ->name('notifications.read');
-    Route::post('notifications/{id}', [NotificationController::class, 'markAsRead']);
-    Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
-    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
-    Route::delete('notifications/{id}', [NotificationController::class, 'deleteNotification']);
 
-    Route::get('/user', [AuthController::class, 'user']);
-    Route::get('category',[DashboardController::class,'index']);
+    // Learning Recommendations
+    Route::get('learning-recommendations', [LearningRecommendationController::class, 'getRecommendations']);
+
+
+    // Recently Viewed
+    Route::get('recently-viewed', [RecentlyViewedController::class, 'index']);
+    Route::post('recently-viewed', [RecentlyViewedController::class, 'store']);
+
+    // Notes CRUD
+    Route::resource('notes', NoteController::class);
+
+    // Chat Messages CRUD  
+    Route::resource('chat-messages', ChatMessageController::class);
+
+    // Bookmarks CRUD
+    Route::resource('bookmarks', BookmarkController::class);
+    Route::delete('bookmarks/by-ebook/{ebook}', [BookmarkController::class, 'destroyByEbookId']);
+
+    // Collections CRUD
+    Route::resource('collections', CollectionController::class);
+    Route::get('my-collections', [CollectionController::class, 'myCollections']);
+    Route::get('my-collections/{collection}', [CollectionController::class, 'myCollectionShow']);
+    Route::post('collections/{collection}/add-ebook', [CollectionController::class, 'addEbook']);
+
+
+    // EBooks CRUD
+    Route::resource('ebooks', EBookController::class);
+
+    Route::get('category', [DashboardController::class, 'index']);
     Route::get('/users', [AuthController::class, 'allUsers']);
     Route::put('/user', [AuthController::class, 'updateUser']);
     Route::post('/user', [AuthController::class, 'changePassword']);
@@ -112,6 +134,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::get('user', [AuthController::class, 'user']);
     Route::post('logout', [AuthController::class, 'logout']);
+    
     Route::get('book-items', [BookItemController::class, 'index']);
     Route::post('book-items', [BookItemController::class, 'store']);
     Route::put('book-items/{book_item}', [BookItemController::class, 'update']);
@@ -124,22 +147,6 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/reset-password/{token}', function ($token) {
         return view('auth.reset-password', ['token' => $token, 'email' => request('email')]);
     })->name('password.reset');
-
-    // Bookmarks
-    Route::apiResource('bookmarks', BookmarkController::class);
-    // Notesa
-        Route::apiResource('notes', NoteController::class);
-    // Chat Messages
-    Route::apiResource('chat-messages', ChatMessageController::class);
-    Route::apiResource('notes', NoteController::class);
-    Route::apiResource('bookmarks', BookmarkController::class);
-    Route::apiResource('collections', CollectionController::class);
-    Route::get('my-collections', [CollectionController::class, 'myCollections']);
-    Route::get('my-collections/{collection}', [CollectionController::class, 'myCollectionShow']);
-    // Recently Viewed
-    Route::get('recently-viewed', [RecentlyViewedController::class, 'index']);
-    Route::post('recently-viewed', [RecentlyViewedController::class, 'store']);
-    Route::get('user', [AuthController::class, 'user']);
 
 
     // 3. Student Role
@@ -157,7 +164,7 @@ Route::middleware('auth:api')->group(function () {
     // 4. Teacher Role
     Route::middleware('role:teacher')->group(function () {
         // CRUD ebooks
-        
+
         // Read-only access to book items, books
 
         // Route::get('books', [BookController::class, 'index']);
@@ -170,7 +177,7 @@ Route::middleware('auth:api')->group(function () {
         // Route::apiResource('books', BookController::class);
         // Route::apiResource('ebooks', EBookController::class);
         // Route::apiResource('book-items', BookItemController::class);
-       
+
         Route::apiResource('loans', LoanController::class);
         Route::get('fines', [FineController::class, 'index']);
         Route::get('fines/{fine}', [FineController::class, 'show']);
@@ -187,7 +194,7 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('role:admin')->group(function () {
         // Full access to all resources
         // // Route::apiResource('books', BookController::class);
-       
+
         // Route::apiResource('book-items', BookItemController::class);
         // Libraries, sections, users, publishers, asset types, shelves, etc.
         // Route::apiResource('libraries', LibraryController::class);
@@ -215,6 +222,5 @@ Route::middleware('auth:api')->group(function () {
         Route::resource('students', StudentController::class);
         Route::post('/students/batch', [StudentController::class, 'batchStore']);
         Route::delete('/bulk-delete', [LibraryController::class, 'bulkDelete']);
-
-});
+    });
 });

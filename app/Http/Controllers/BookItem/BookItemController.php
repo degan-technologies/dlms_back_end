@@ -419,4 +419,78 @@ class BookItemController extends Controller {    public function index(Request $
 
         return $this->show($request, $bookItem);
     }
+
+    /**
+     * Advanced search for BookItems, returning both digital and physical formats distinctly.
+     */
+    public function search(Request $request)
+    {
+        $query = BookItem::query();
+
+        // Keyword search (title, author, description, etc.)
+        if ($request->filled('q')) {
+            $keyword = $request->input('q');
+            $query->where(function ($q) use ($keyword) {
+                $q->where('title', 'like', "%$keyword%")
+                  ->orWhere('author', 'like', "%$keyword%")
+                  ->orWhere('description', 'like', "%$keyword%")
+                  ->orWhereHas('subject', function ($sq) use ($keyword) {
+                      $sq->where('name', 'like', "%$keyword%")
+                        ->orWhere('description', 'like', "%$keyword%") ;
+                  });
+            });
+        }
+
+        // Apply filters (category, language, subject, grade, library, user)
+        $idFilters = ['category_id', 'language_id', 'subject_id', 'grade_id', 'library_id', 'user_id'];
+        foreach ($idFilters as $filter) {
+            if ($request->filled($filter)) {
+                $query->where($filter, $request->input($filter));
+            }
+        }
+
+        // Always eager load relationships
+        $query->with(['language', 'category', 'subject', 'grade', 'library', 'user']);
+        $query->with(['books' => function ($q) {
+            $q->with('shelf');
+        }]);
+        $query->with(['ebooks' => function ($q) {
+            $q->with('ebookType');
+        }]);
+
+        // Pagination
+        $perPage = $request->input('per_page', 15);
+        $bookItems = $query->paginate($perPage);
+
+        // Transform results: for each BookItem, split into digital and physical if both exist
+        $results = [];
+        foreach ($bookItems as $item) {
+            if ($item->books->count() > 0) {
+                $physical = [
+                    'format' => 'physical',
+                    'book_item' => new \App\Http\Resources\BookItem\BookItemResource($item),
+                    'books' => $item->books,
+                ];
+                $results[] = $physical;
+            }
+            if ($item->ebooks->count() > 0) {
+                $digital = [
+                    'format' => 'digital',
+                    'book_item' => new \App\Http\Resources\BookItem\BookItemResource($item),
+                    'ebooks' => $item->ebooks,
+                ];
+                $results[] = $digital;
+            }
+        }
+
+        return response()->json([
+            'data' => $results,
+            'meta' => [
+                'current_page' => $bookItems->currentPage(),
+                'last_page' => $bookItems->lastPage(),
+                'per_page' => $bookItems->perPage(),
+                'total' => $bookItems->total(),
+            ]
+        ]);
+    }
 }

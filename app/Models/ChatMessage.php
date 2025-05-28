@@ -21,6 +21,8 @@ class ChatMessage extends Model
         'question',
         'highlight_text',
         'ai_response',
+        'page_number',
+        'sent_at',
         'is_anonymous'
     ];
 
@@ -31,6 +33,8 @@ class ChatMessage extends Model
      */
     protected $casts = [
         'is_anonymous' => 'boolean',
+        'page_number' => 'integer',
+        'sent_at' => 'datetime',
     ];
 
      public function user()
