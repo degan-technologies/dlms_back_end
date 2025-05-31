@@ -61,20 +61,29 @@ class NoteSeeder extends Seeder
         // For each student, create 0-8 notes
         foreach ($studentUsers as $user) {
             $noteCount = rand(0, 8);
-            
-            // Get random ebooks for notes
-            $userEbooks = $ebooks->random(min($noteCount, $ebooks->count()));
-            
+            // Only use ebooks with type 1 (PDF) or 2 (Video)
+            $validEbooks = $ebooks->whereIn('e_book_type_id', [1, 2]);
+            if ($validEbooks->isEmpty()) continue;
+            $userEbooks = $validEbooks->random(min($noteCount, $validEbooks->count()));
             foreach ($userEbooks as $ebook) {
-                // 50% chance to include highlight text
-                $includeHighlight = (rand(0, 1) == 1);
-                  Note::create([
+                $isPdf = $ebook->e_book_type_id == 1;
+                $isVideo = $ebook->e_book_type_id == 2;
+                $data = [
                     'user_id' => $user->id,
                     'e_book_id' => $ebook->id,
                     'content' => $noteContents[array_rand($noteContents)],
-                    'page_number' => rand(1, $ebook->pages ?: 100),
-                    'highlight_text' => $includeHighlight ? $highlightTexts[array_rand($highlightTexts)] : null,
-                ]);
+                ];
+                if ($isPdf) {
+                    $data['page_number'] = rand(1, $ebook->pages ?: 100);
+                    $includeHighlight = (rand(0, 1) == 1);
+                    $data['highlight_text'] = $includeHighlight ? $highlightTexts[array_rand($highlightTexts)] : null;
+                    $data['sent_at'] = null;
+                } elseif ($isVideo) {
+                    $data['sent_at'] = now();
+                    $data['page_number'] = null;
+                    $data['highlight_text'] = null;
+                }
+                Note::create($data);
             }
         }
         
