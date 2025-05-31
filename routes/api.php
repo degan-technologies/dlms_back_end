@@ -140,7 +140,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::get('user', [AuthController::class, 'user']);
     Route::post('logout', [AuthController::class, 'logout']);
-    
+
     Route::get('book-items', [BookItemController::class, 'index']);
     Route::post('book-items', [BookItemController::class, 'store']);
     Route::put('book-items/{book_item}', [BookItemController::class, 'update']);
@@ -163,6 +163,14 @@ Route::middleware('auth:api')->group(function () {
         // Route::get('books', [BookController::class, 'index']);
         // Route::get('books/{book}', [BookController::class, 'show']);
         Route::get('ebooks/{ebook}', [EBookController::class, 'show']);
+        Route::get('notifications', [NotificationController::class, 'index']);
+        Route::put('notifications/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+
+        //Route::get('notifications/unread', [NotificationController::class, 'unreadNotifications'])->name('notifications.read');
+        Route::get('notifications/unread', [NotificationController::class, 'unreadNotifications'])->name('notifications.read');  
+        Route::delete('notifications/clear-all', [NotificationController::class, 'clearAll'])->name('notifications.clear-all');
+        Route::put('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+        Route::delete('notifications/{notification}', [NotificationController::class, 'destroy']);
         // Reading lists (legacy)
         // Route::get('reading-lists', ...);
     });
@@ -191,6 +199,13 @@ Route::middleware('auth:api')->group(function () {
         Route::put('fines/{fine}', [FineController::class, 'update']);
         Route::delete('fines/{fine}', [FineController::class, 'destroy']);
         Route::get('reservations', [ReservationController::class, 'index']);
+        // Route::get('notifications', [NotificationController::class, 'index']);
+        // Route::get('notifications/unread', [NotificationController::class, 'unreadNotifications']);
+        // Route::put('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+        Route::get('notifications/{notification}', [NotificationController::class, 'show']);
+        Route::post('notifications', [NotificationController::class, 'store']);
+        Route::put('notifications/{notification}', [NotificationController::class, 'update']);
+
 
         // Route::apiResource('book-items', BookItemController::class);
         // CRUD collections
@@ -233,3 +248,4 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/bulk-delete', [LibraryController::class, 'bulkDelete']);
     });
 });
+
