@@ -29,6 +29,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RecentlyViewed\RecentlyViewedController;
 use App\Http\Controllers\LearningRecommendationController;
+use App\Http\Controllers\HomeController;
 
 // 1. Public Routes
 Route::post('login', [AuthController::class, 'login']);
@@ -94,6 +95,8 @@ Route::middleware('auth:api')->group(function () {
     // User profile & auth
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('user', [AuthController::class, 'user']);
+    Route::get('/counts', [HomeController::class, 'getCounts']);
+
 
     // Learning Recommendations
     Route::get('learning-recommendations', [LearningRecommendationController::class, 'getRecommendations']);
