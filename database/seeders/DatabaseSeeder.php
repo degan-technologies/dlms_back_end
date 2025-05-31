@@ -31,10 +31,8 @@ class DatabaseSeeder  extends Seeder
             EbookReadingSeeder::class,
 
             NotificationTypeSeeder::class,
+            NotificationSeeder::class,
             AskLibrarianSeeder::class,
-
-            // Books and related items
-            BookConditionSeeder::class,
 
             // Loan and reservation related
             LoanSeeder::class,
@@ -47,6 +45,9 @@ class DatabaseSeeder  extends Seeder
             ChatMessageSeeder::class,
             RecentlyViewedSeeder::class,
             CollectionSeeder::class,
+            RecentlyViewedSeeder::class,
+            AskLibrarianMessagesSeeder::class
+
         ]);
     }
 }
