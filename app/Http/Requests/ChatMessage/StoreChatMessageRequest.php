@@ -23,7 +23,7 @@ class StoreChatMessageRequest extends FormRequest {
             'e_book_id' => 'required|exists:e_books,id',
             'question' => 'required|string',
             'highlight_text' => 'nullable|string',
-            'sent_at' => 'nullable|date_format:Y-m-d H:i:s',
+            'sent_at' => 'nullable|date_format:H:i:s',
             'page_number' => 'nullable|integer|min:1',
             'is_anonymous' => 'sometimes|boolean'
         ];
