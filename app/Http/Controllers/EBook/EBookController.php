@@ -22,7 +22,7 @@ class EBookController extends Controller {
 
         // Always load required relationships for EBook resource
         $query->with(['bookmarks', 'notes', 'chatMessages', 'collections', 'ebookType']);
-        
+
         // Also include interaction counts
         $query->withCount(['bookmarks', 'notes', 'chatMessages', 'collections']);
 
@@ -49,7 +49,7 @@ class EBookController extends Controller {
             $relationships = explode(',', $request->with);
             $allowedRelations = ['bookItem', 'ebookType', 'bookmarks', 'notes', 'collections'];
             $additionalRelations = array_diff(array_intersect($relationships, $allowedRelations), ['bookmarks', 'notes', 'chatMessages', 'collections', 'ebookType']);
-            
+
             if (!empty($additionalRelations)) {
                 $query->with($additionalRelations);
             }
@@ -134,7 +134,7 @@ class EBookController extends Controller {
             $relationships = explode(',', $request->with);
             $allowedRelations = ['bookItem', 'ebookType', 'bookmarks', 'notes', 'collections'];
             $additionalRelations = array_diff(array_intersect($relationships, $allowedRelations), ['bookmarks', 'notes', 'chatMessages', 'collections', 'ebookType']);
-            
+
             if (!empty($additionalRelations)) {
                 $ebook->load($additionalRelations);
             }

@@ -127,6 +127,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('reservations/{reservation}', [ReservationController::class, 'show']);
     Route::put('reservations/{reservation}', [ReservationController::class, 'update']);
     Route::delete('reservations/{reservation}', [ReservationController::class, 'destroy']);
+    Route::get('read/{ebook}', [EBookController::class, 'show']);
 
 
     // EBooks CRUD
@@ -160,12 +161,12 @@ Route::middleware('auth:api')->group(function () {
 
     // 3. Student Role
     Route::apiResource('ebooks', EBookController::class);
+    Route::apiResource('books', BookController::class);
     Route::middleware('role:student')->group(function () {
         // Read-only access to book items, books, ebooks
 
         // Route::get('books', [BookController::class, 'index']);
         // Route::get('books/{book}', [BookController::class, 'show']);
-        Route::get('ebooks/{ebook}', [EBookController::class, 'show']);
         Route::get('notifications', [NotificationController::class, 'index']);
         Route::put('notifications/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
 
@@ -181,7 +182,7 @@ Route::middleware('auth:api')->group(function () {
     // 4. Teacher Role
     Route::middleware('role:teacher')->group(function () {
         // CRUD ebooks
-
+        Route::get('teacher-book-items', [BookItemController::class, 'teacherBookItems']);
         // Read-only access to book items, books
 
         // Route::get('books', [BookController::class, 'index']);
