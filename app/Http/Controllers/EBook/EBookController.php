@@ -38,10 +38,8 @@ class EBookController extends Controller {
             $query->where('e_book_type_id', $request->e_book_type_id);
         }
 
-        if ($request->has('title')) {
-            $query->whereHas('bookItem', function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->title . '%');
-            });
+        if ($request->has('file_name')) {
+            $query->where('file_name', 'like', '%' . $request->file_name . '%');
         }
 
         // Include additional relationships if requested

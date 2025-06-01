@@ -25,9 +25,7 @@ class BookController extends Controller {
 
         // Apply filters if provided
         if ($request->has('title')) {
-            $query->whereHas('bookItem', function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->title . '%');
-            });
+            $query->where('title', 'like', '%' . $request->title . '%');
         }
         if ($request->has('book_item_id')) {
             $query->where('book_item_id', $request->book_item_id);
