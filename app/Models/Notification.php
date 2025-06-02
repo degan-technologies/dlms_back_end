@@ -8,15 +8,27 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Notification extends Model
 {
     use SoftDeletes;
-    protected $fillable = ['user_id','message','notification_type_id'];
 
-    public function user()
+    protected $keyType = 'string';
+    public $incrementing = false;
+
+    protected $fillable = [
+        'id',
+        'type',
+        'notifiable_id',
+        'notifiable_type',
+        'read_at',
+    ];
+
+    protected $dates = [
+        'read_at',
+        'deleted_at',
+        'created_at',
+        'updated_at',
+    ];
+
+    public function notifiable()
     {
-        return $this->belongsTo(User::class);
-    }
-    public function type()
-    {
-        return $this->belongsTo(NotificationType::class, 'notification_type_id');
+        return $this->morphTo();
     }
 }
-
