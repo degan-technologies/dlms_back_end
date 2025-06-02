@@ -4,13 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Reservation;
 use App\Http\Resources\Reservation\ReservationCollection;
+use App\Models\Book;
 use Illuminate\Http\Request;
 
-class ReservationController extends Controller
-{
+class ReservationController extends Controller {
     // List all reservations (with pagination)
-    public function index(Request $request)
-    {
+    public function index(Request $request) {
         $perPage = $request->input('per_page', 30);
         $reservations = Reservation::paginate($perPage);
         return (new ReservationCollection($reservations))
@@ -25,31 +24,47 @@ class ReservationController extends Controller
     }
 
     // Store a new reservation
-    public function store(Request $request)
-    {
+    public function store(Request $request) {
+        $user = auth()->user();
+
+        // Check if user already has a reservation
+        // Check if user already has an active reservation (pending) or an active loan (not returned)
+        $hasActiveReservation = Reservation::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->exists();
+
+        $hasActiveLoan = \App\Models\Loan::where('user_id', $user->id)
+            ->whereNull('returned_date')
+            ->exists();
+
+        if ($hasActiveReservation || $hasActiveLoan) {
+            return response()->json(['error' => 'You already have an active reservation or loan.'], 422);
+        }
+
         $validated = $request->validate([
-            'reservation_date' => 'nullable|date',
-            'status' => 'nullable|string|max:20',
-            'expiration_time' => 'nullable|date',
-            'reservation_code' => 'required|string|max:50|unique:reservations,reservation_code',
-            'user_id' => 'required|integer|exists:users,id',
             'book_item_id' => 'required|integer|exists:book_items,id',
-            'library_id' => 'required|integer|exists:libraries,id',
         ]);
 
         // Find an available book under the requested book_item_id
-        $book = \App\Models\Book::where('book_item_id', $validated['book_item_id'])
+        $book = Book::where('book_item_id', $validated['book_item_id'])
             ->where('is_reserved', false)
+            ->orderByDesc('publication_year')
             ->first();
 
         if (!$book) {
             return response()->json(['error' => 'No available book found for this book item.'], 422);
         }
 
-        $validated['book_id'] = $book->id;
-        unset($validated['book_item_id']); // Remove book_item_id, not needed in reservations table
+        $reservationData = [
+            'user_id' => $user->id,
+            'book_id' => $book->id,
+            'library_id' => $book->library_id,
+            'status' => 'pending',
+            'reservation_code' => 'RES-' . strtoupper(uniqid()),
+            'reservation_date' => now(),
+        ];
 
-        $reservation = Reservation::create($validated);
+        $reservation = Reservation::create($reservationData);
 
         // Mark the book as reserved
         $book->is_reserved = true;
@@ -59,15 +74,13 @@ class ReservationController extends Controller
     }
 
     // Show a single reservation
-    public function show($id)
-    {
+    public function show($id) {
         $reservation = Reservation::findOrFail($id);
         return response()->json($reservation);
     }
 
     // Update a reservation
-    public function update(Request $request, $id)
-    {
+    public function update(Request $request, $id) {
         $reservation = Reservation::findOrFail($id);
         $validated = $request->validate([
             'reservation_date' => 'nullable|date',
@@ -83,8 +96,7 @@ class ReservationController extends Controller
     }
 
     // Delete (soft delete) a reservation
-    public function destroy($id)
-    {
+    public function destroy($id) {
         $reservation = Reservation::findOrFail($id);
         $reservation->delete();
         return response()->json(['message' => 'Reservation deleted successfully']);

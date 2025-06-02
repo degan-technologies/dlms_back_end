@@ -31,5 +31,5 @@ return [
     'max_age' => 0,
 
     // Since you use Laravel Passport (token auth), do NOT support credentials/cookies
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 ];

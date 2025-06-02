@@ -25,7 +25,7 @@ class StoreEBookRequest extends FormRequest
             'book_item_id' => 'required|exists:book_items,id',
             'file_name' => 'required|string|max:255',
             'file_path' => 'nullable|string',
-            'pdf_file' => 'required|file|mimes:pdf|max:102400',
+            'pdf_file' => 'nullable|file|mimes:pdf|max:102400',
             'is_downloadable' => 'nullable|string|in:true,false',
             'e_book_type_id' => 'required|exists:e_book_types,id',
         ];

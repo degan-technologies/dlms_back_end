@@ -14,22 +14,22 @@ class NotificationController extends Controller
     /**
      * Get paginated notifications
      */
- public function index(Request $request)
-{
-    $notifications = $request->user()
-        ->notifications()
-        ->latest()
-        ->paginate($request->per_page ?? 15);
+    public function index(Request $request)
+    {
+        $notifications = $request->user()
+            ->notifications()
+            ->latest()
+            ->paginate($request->per_page ?? 15);
 
-    return new NotificationCollection($notifications);
-}
+        return new NotificationCollection($notifications);
+    }
 
-public function show(DatabaseNotification $notification)
-{
-    $this->authorize('view', $notification);
-    
-    return new NotificationResource($notification);
-}
+    public function show(DatabaseNotification $notification)
+    {
+        $this->authorize('view', $notification);
+
+        return new NotificationResource($notification);
+    }
 
     /**
      * Mark notification as read
@@ -39,14 +39,13 @@ public function show(DatabaseNotification $notification)
         try {
             $user = Auth::user();
             $notification = $user->notifications()->findOrFail($notificationId);
-            
+
             $notification->markAsRead();
-            
+
             return response()->json([
                 'success' => true,
                 'unread_count' => $user->unreadNotifications()->count()
             ]);
-            
         } catch (ModelNotFoundException $e) {
             return response()->json(['error' => 'Notification not found'], 404);
         } catch (\Exception $e) {
@@ -62,32 +61,29 @@ public function show(DatabaseNotification $notification)
         try {
             $user = Auth::user();
             $user->unreadNotifications->markAsRead();
-            
+
             return response()->json([
                 'success' => true,
                 'unread_count' => 0
             ]);
-            
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to mark all notifications as read'], 500);
         }
     }
-
-    /**
-     * Delete all notifications
-     */
-    public function clearAll()
+/**
+ * Delete all notifications
+ */
+public function clearAll()
     {
         try {
             $user = Auth::user();
             $user->notifications()->delete();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'All notifications cleared',
                 'unread_count' => 0
             ]);
-            
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to clear notifications'], 500);
         }
@@ -102,16 +98,25 @@ public function show(DatabaseNotification $notification)
             $user = Auth::user();
             $notification = $user->notifications()->findOrFail($notificationId);
             $notification->delete();
-            
+
             return response()->json([
                 'success' => true,
-                'unread_count' => $user->unreadNotifications()->count()
+                // 'unread_count' => $user->unreadNotifications()->count()
             ]);
-            
         } catch (ModelNotFoundException $e) {
             return response()->json(['error' => 'Notification not found'], 404);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to delete notification'], 500);
         }
+    }
+
+    /**
+     * Get unread notifications for the authenticated user
+     */
+    public function unreadNotifications(Request $request)
+    {
+        $user = $request->user();
+        $notifications = $user->unreadNotifications()->latest()->paginate($request->per_page ?? 15);
+        return new \App\Http\Resources\Notification\NotificationCollection($notifications);
     }
 }

@@ -11,6 +11,7 @@ use App\Models\Library;
 use App\Models\Shelf;
 use App\Models\Subject;
 use Illuminate\Database\Seeder;
+use Faker\Factory as Faker;
 
 class BookItemSeeder extends Seeder
 {
@@ -98,7 +99,7 @@ class BookItemSeeder extends Seeder
                 'description' => 'Audio guide for biology.',
                 'cover_image' => 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca',
                 'grade' => 'Grade 10',
-                'e_book_type_id' => 3,
+                'e_book_type_id' => 2, // changed from 3 to 2
                 'file_path' => 'https://www.youtube.com/embed/2Vv-BfVoq4g',
                 'file_name' => 'biology_audio_guide',
             ],
@@ -118,31 +119,27 @@ class BookItemSeeder extends Seeder
                 'description' => 'Audio lessons on music theory.',
                 'cover_image' => 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b99',
                 'grade' => 'Grade 9',
-                'e_book_type_id' => 3,
+                'e_book_type_id' => 2, // changed from 3 to 2
                 'file_path' => 'https://www.youtube.com/embed/JGwWNGJdvx8',
                 'file_name' => 'music_theory_audio',
             ],
         ];
 
-        // Seed 10 BookItems, each with both Books and EBooks
-        for ($i = 1; $i <= 10; $i++) {
-            $user = $users->random();
-            $grade = $grades->random();
+        // Seed 5 physical BookItems and Books
+        foreach ($physicalBooks as $physicalBook) {
+            $grade = $grades->where('name', $physicalBook['grade'])->first() ?? $grades->random();
             $library = $libraries->random();
             $category = $categories->random();
             $language = $languages->random();
             $subject = $subjects->random();
-            $title = 'BookItem ' . $i . ' - ' . fake()->unique()->word();
-            $author = fake()->name();
-            $cover_image = 'https://picsum.photos/seed/bookitem' . $i . '/200/300';
-            $description = fake()->sentence();
+            $user = $users->random();
 
             // Create BookItem
             $bookItem = BookItem::create([
-                'title' => $title,
-                'author' => $author,
-                'description' => $description,
-                'cover_image' => $cover_image,
+                'title' => $physicalBook['title'],
+                'author' => $physicalBook['author'],
+                'description' => $physicalBook['description'],
+                'cover_image' => $physicalBook['cover_image'],
                 'grade_id' => $grade->id,
                 'library_id' => $library->id,
                 'category_id' => $category->id,
@@ -151,54 +148,56 @@ class BookItemSeeder extends Seeder
                 'user_id' => $user->id,
             ]);
 
-            // Create 5 physical Books for this BookItem
-            for ($j = 1; $j <= 5; $j++) {
-                Book::create([
-                    'book_item_id' => $bookItem->id,
-                    'title' => $title,
-                    'user_id' => $user->id,
-                    'cover_image' => $cover_image,
-                    'edition' => $j . 'th Edition',
-                    'pages' => rand(100, 500),
-                    'is_borrowable' => rand(0, 1),
-                    'is_reserved' => rand(0, 1),
-                    'library_id' => $library->id,
-                    'shelf_id' => $shelves->random()->id,
-                    'publication_year' => now()->subYears(rand(0, 10))->format('Y'),
-                ]);
-            }
+            // Create a single Book for this BookItem
+            Book::create([
+                'book_item_id' => $bookItem->id,
+                'title' => $physicalBook['title'],
+                'user_id' => $user->id,
+                'cover_image' => $physicalBook['cover_image'],
+                'edition' => '1st Edition',
+                'pages' => rand(100, 500),
+                'is_borrowable' => 1,
+                'is_reserved' => 0,
+                'library_id' => $library->id,
+                'shelf_id' => $shelves->random()->id,
+                'publication_year' => now()->subYears(rand(0, 10))->format('Y'),
+            ]);
+        }
 
-            // Create 5 EBooks for this BookItem
-            for ($k = 1; $k <= 5; $k++) {
-                $isPdf = $k % 2 === 1;
-                if ($isPdf) {
-                    // PDF EBook (type 1)
-                    EBook::create([
-                        'book_item_id' => $bookItem->id,
-                        'file_path' => 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-                        'file_name' => strtolower(str_replace(' ', '_', $title)) . "_ebook{$k}.pdf",
-                        'file_size_mb' => rand(1, 50) + (rand(0, 99) / 100),
-                        'pages' => rand(50, 600),
-                        'is_downloadable' => rand(0, 1),
-                        'e_book_type_id' => 1, // PDF
-                        'user_id' => $user->id,
-                        // No sent_at for PDF
-                    ]);
-                } else {
-                    // Video EBook (type 2)
-                    EBook::create([
-                        'book_item_id' => $bookItem->id,
-                        'file_path' => 'https://www.youtube.com/embed/1Fi2b8Qj4Lk',
-                        'file_name' => strtolower(str_replace(' ', '_', $title)) . "_ebook{$k}_video",
-                        'file_size_mb' => rand(1, 50) + (rand(0, 99) / 100),
-                        // No pages for video
-                        'is_downloadable' => rand(0, 1),
-                        'e_book_type_id' => 2, // Video
-                        'user_id' => $user->id,
-                        // Only for video, sent_at is not in fillable, so skip
-                    ]);
-                }
-            }
+        // Seed 5 EBook BookItems and EBooks
+        foreach ($ebooks as $ebook) {
+            $grade = $grades->where('name', $ebook['grade'])->first() ?? $grades->random();
+            $library = $libraries->random();
+            $category = $categories->random();
+            $language = $languages->random();
+            $subject = $subjects->random();
+            $user = $users->random();
+
+            // Create BookItem
+            $bookItem = BookItem::create([
+                'title' => $ebook['title'],
+                'author' => $ebook['author'],
+                'description' => $ebook['description'],
+                'cover_image' => $ebook['cover_image'],
+                'grade_id' => $grade->id,
+                'library_id' => $library->id,
+                'category_id' => $category->id,
+                'language_id' => $language->id,
+                'subject_id' => $subject->id,
+                'user_id' => $user->id,
+            ]);
+
+            // Create a single EBook for this BookItem
+            EBook::create([
+                'book_item_id' => $bookItem->id,
+                'file_path' => $ebook['file_path'],
+                'file_name' => $ebook['file_name'],
+                'file_size_mb' => rand(1, 50) + (rand(0, 99) / 100),
+                'pages' => isset($ebook['e_book_type_id']) && $ebook['e_book_type_id'] == 1 ? rand(50, 600) : null,
+                'is_downloadable' => 1,
+                'e_book_type_id' => $ebook['e_book_type_id'],
+                'user_id' => $user->id,
+            ]);
         }
 
         $this->command->info('Book items, books, and ebooks seeded successfully.');

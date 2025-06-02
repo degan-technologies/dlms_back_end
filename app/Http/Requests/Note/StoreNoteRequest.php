@@ -23,7 +23,7 @@ class StoreNoteRequest extends FormRequest {
             'e_book_id' => 'required|exists:e_books,id',
             'content' => 'required|string',
             'page_number' => 'nullable|integer|min:1',
-            'sent_at' => 'nullable|date_format:Y-m-d H:i:s',
+            'sent_at' => 'nullable|date_format:H:i:s',
             'highlight_text' => 'nullable|string',
         ];
     }

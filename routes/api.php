@@ -29,6 +29,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RecentlyViewed\RecentlyViewedController;
 use App\Http\Controllers\LearningRecommendationController;
+use App\Http\Controllers\HomeController;
 
 // 1. Public Routes
 Route::post('login', [AuthController::class, 'login']);
@@ -94,6 +95,8 @@ Route::middleware('auth:api')->group(function () {
     // User profile & auth
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('user', [AuthController::class, 'user']);
+    Route::get('/counts', [HomeController::class, 'getCounts']);
+
 
     // Learning Recommendations
     Route::get('learning-recommendations', [LearningRecommendationController::class, 'getRecommendations']);
@@ -124,6 +127,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('reservations/{reservation}', [ReservationController::class, 'show']);
     Route::put('reservations/{reservation}', [ReservationController::class, 'update']);
     Route::delete('reservations/{reservation}', [ReservationController::class, 'destroy']);
+    Route::get('read/{ebook}', [EBookController::class, 'show']);
 
 
     // EBooks CRUD
@@ -140,7 +144,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::get('user', [AuthController::class, 'user']);
     Route::post('logout', [AuthController::class, 'logout']);
-    
+
     Route::get('book-items', [BookItemController::class, 'index']);
     Route::post('book-items', [BookItemController::class, 'store']);
     Route::put('book-items/{book_item}', [BookItemController::class, 'update']);
@@ -157,12 +161,20 @@ Route::middleware('auth:api')->group(function () {
 
     // 3. Student Role
     Route::apiResource('ebooks', EBookController::class);
+    Route::apiResource('books', BookController::class);
     Route::middleware('role:student')->group(function () {
         // Read-only access to book items, books, ebooks
 
         // Route::get('books', [BookController::class, 'index']);
         // Route::get('books/{book}', [BookController::class, 'show']);
-        Route::get('ebooks/{ebook}', [EBookController::class, 'show']);
+        Route::get('notifications', [NotificationController::class, 'index']);
+        Route::put('notifications/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+
+        //Route::get('notifications/unread', [NotificationController::class, 'unreadNotifications'])->name('notifications.read');
+        Route::get('notifications/unread', [NotificationController::class, 'unreadNotifications'])->name('notifications.read');  
+        Route::delete('notifications/clear-all', [NotificationController::class, 'clearAll'])->name('notifications.clear-all');
+        Route::put('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+        Route::delete('notifications/{notification}', [NotificationController::class, 'destroy']);
         // Reading lists (legacy)
         // Route::get('reading-lists', ...);
     });
@@ -170,7 +182,7 @@ Route::middleware('auth:api')->group(function () {
     // 4. Teacher Role
     Route::middleware('role:teacher')->group(function () {
         // CRUD ebooks
-
+        Route::get('teacher-book-items', [BookItemController::class, 'teacherBookItems']);
         // Read-only access to book items, books
 
         // Route::get('books', [BookController::class, 'index']);
@@ -191,6 +203,13 @@ Route::middleware('auth:api')->group(function () {
         Route::put('fines/{fine}', [FineController::class, 'update']);
         Route::delete('fines/{fine}', [FineController::class, 'destroy']);
         Route::get('reservations', [ReservationController::class, 'index']);
+        // Route::get('notifications', [NotificationController::class, 'index']);
+        // Route::get('notifications/unread', [NotificationController::class, 'unreadNotifications']);
+        // Route::put('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+        Route::get('notifications/{notification}', [NotificationController::class, 'show']);
+        Route::post('notifications', [NotificationController::class, 'store']);
+        Route::put('notifications/{notification}', [NotificationController::class, 'update']);
+
 
         // Route::apiResource('book-items', BookItemController::class);
         // CRUD collections
@@ -233,3 +252,4 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/bulk-delete', [LibraryController::class, 'bulkDelete']);
     });
 });
+
