@@ -19,7 +19,18 @@ class NotificationController extends Controller
         $notifications = $request->user()
             ->notifications()
             ->latest()
-            ->paginate($request->per_page ?? 15);
+            ->get();
+
+        return new NotificationCollection($notifications);
+    }
+
+    public function librarianIndex(Request $request)
+    {
+        $notifications = $request->user()
+            ->notifications()
+            ->where('type', 'App\Notifications\NewEBookCreatedNotification')
+            ->latest()
+            ->get();
 
         return new NotificationCollection($notifications);
     }

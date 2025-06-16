@@ -10,11 +10,13 @@ class CreateLoansTable extends Migration
     {
         Schema::create('loans', function (Blueprint $table) {
             $table->id();
-          
+
             $table->date('borrow_date');
             $table->date('due_date');
             $table->date('returned_date')->nullable();
-           
+            $table->timestamp('last_notified_at')->nullable();
+
+
             $table->timestamps();
             $table->softDeletes();
 

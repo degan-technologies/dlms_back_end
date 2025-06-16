@@ -14,7 +14,6 @@ use App\Http\Controllers\ChatMessage\ChatMessageController;
 use App\Http\Controllers\Collection\CollectionController;
 use App\Http\Controllers\BookItem\BookItemController;
 use App\Http\Controllers\Book\BookController;
-// use App\Http\Controllers\Collection\CollectionController;
 use App\Http\Controllers\EBook\EBookController;
 use App\Http\Controllers\EBook\EBookFileController;
 use App\Http\Controllers\Constant\ConstantController;
@@ -164,37 +163,25 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('books', BookController::class);
     Route::middleware('role:student')->group(function () {
         // Read-only access to book items, books, ebooks
-
-        // Route::get('books', [BookController::class, 'index']);
-        // Route::get('books/{book}', [BookController::class, 'show']);
         Route::get('notifications', [NotificationController::class, 'index']);
         Route::put('notifications/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
 
         //Route::get('notifications/unread', [NotificationController::class, 'unreadNotifications'])->name('notifications.read');
-        Route::get('notifications/unread', [NotificationController::class, 'unreadNotifications'])->name('notifications.read');  
+        Route::get('notifications/unread', [NotificationController::class, 'unreadNotifications'])->name('notifications.read');
         Route::delete('notifications/clear-all', [NotificationController::class, 'clearAll'])->name('notifications.clear-all');
         Route::put('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
         Route::delete('notifications/{notification}', [NotificationController::class, 'destroy']);
-        // Reading lists (legacy)
-        // Route::get('reading-lists', ...);
     });
 
     // 4. Teacher Role
     Route::middleware('role:teacher')->group(function () {
         // CRUD ebooks
         Route::get('teacher-book-items', [BookItemController::class, 'teacherBookItems']);
-        // Read-only access to book items, books
-
-        // Route::get('books', [BookController::class, 'index']);
-        // Route::get('books/{book}', [BookController::class, 'show']);
     });
 
     // 5. Librarian Role
     Route::middleware('role:librarian')->group(function () {
         // CRUD books, ebooks, book items
-        // Route::apiResource('books', BookController::class);
-        // Route::apiResource('ebooks', EBookController::class);
-        // Route::apiResource('book-items', BookItemController::class);
 
         Route::apiResource('loans', LoanController::class);
         Route::get('fines', [FineController::class, 'index']);
@@ -203,40 +190,21 @@ Route::middleware('auth:api')->group(function () {
         Route::put('fines/{fine}', [FineController::class, 'update']);
         Route::delete('fines/{fine}', [FineController::class, 'destroy']);
         Route::get('reservations', [ReservationController::class, 'index']);
-        // Route::get('notifications', [NotificationController::class, 'index']);
+        Route::get('librarian/notifications', [NotificationController::class, 'librarianIndex']);
         // Route::get('notifications/unread', [NotificationController::class, 'unreadNotifications']);
         // Route::put('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
         Route::get('notifications/{notification}', [NotificationController::class, 'show']);
         Route::post('notifications', [NotificationController::class, 'store']);
         Route::put('notifications/{notification}', [NotificationController::class, 'update']);
-
-
-        // Route::apiResource('book-items', BookItemController::class);
-        // CRUD collections
     });
 
     // 6. Admin Role
-    Route::middleware('role:admin')->group(function () {
-        // Full access to all resources
-        // // Route::apiResource('books', BookController::class);
-
-        // Route::apiResource('book-items', BookItemController::class);
-        // Libraries, sections, users, publishers, asset types, shelves, etc.
-        // Route::apiResource('libraries', LibraryController::class);
-        // Route::apiResource('sections', SectionController::class);
-        // Route::apiResource('users', UserController::class);
-        // ...add other admin resources
-    });
+    Route::middleware('role:admin')->group(function () {});
 
     Route::get('/branches', [LibraryBranchController::class, 'index']); // Accessible by all users
 
     // 7. Superadmin Role
     Route::middleware('role:superadmin')->group(function () {
-        // Branch management, admin user management
-        // Route::apiResource('branches', BranchController::class);
-        // Route::apiResource('admins', AdminController::class);
-        // ...inherits all admin privileges
-
         Route::resource('/branches', LibraryBranchController::class)->except(['index']);
         Route::delete('/bulkdelete', [LibraryBranchController::class, 'bulkDelete']);
     });
@@ -252,4 +220,3 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/bulk-delete', [LibraryController::class, 'bulkDelete']);
     });
 });
-

@@ -29,9 +29,8 @@ class CheckLoans extends Command
             $query->whereDate('due_date', '<', $today);
             $this->info("Checking overdue loans...");
         } elseif ($type === 'upcoming') {
-            $query->whereDate('due_date', '>=', $today)
-                  ->whereDate('due_date', '<=', $today->copy()->addDays(3));
-            $this->info("Checking upcoming due loans...");
+            $query->whereDate('due_date', '>=', $today); // Remove upper bound to include all future loans
+            $this->info("Checking upcoming and future due loans...");
         }
 
         $loans = $query->get();
@@ -39,19 +38,8 @@ class CheckLoans extends Command
         foreach ($loans as $loan) {
             $dueDate = Carbon::parse($loan->due_date);
             $daysDiff = $today->diffInDays($dueDate, false);
-            
-            if ($type === 'overdue') {
-                // For overdue loans, notify every check (5 minutes)
-                $this->sendNotification($loan, $daysDiff);
-                $notifiedCount++;
-            } 
-            elseif ($type === 'upcoming') {
-                // For upcoming loans, notify once per day
-                if (!$loan->last_notified_at || !$loan->last_notified_at->isToday()) {
-                    $this->sendNotification($loan, $daysDiff);
-                    $notifiedCount++;
-                }
-            }
+            $this->sendNotification($loan, $daysDiff);
+            $notifiedCount++;
         }
 
         $this->info("Sent {$notifiedCount} notifications.");

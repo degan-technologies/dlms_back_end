@@ -11,18 +11,20 @@ use App\Models\BookItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
-class BookItemController extends Controller {
-    
+class BookItemController extends Controller
+{
+
     /**
      * Apply library branch filter for books only (ebooks remain global)
      */
     private function applyLibraryBranchFilterForBooks($query, $user = null)
     {
         if (!$user) {
-            $user = auth()->user();
+            $user = Auth::user();
         }
-        
+
         if ($user && $user->library_branch_id) {
             // Filter books by library_branch_id through library relationship
             $query->with(['books' => function ($q) use ($user) {
@@ -31,11 +33,12 @@ class BookItemController extends Controller {
                 });
             }]);
         }
-        
+
         return $query;
     }
 
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
         $query = BookItem::query();
         $user = $request->user();
 
@@ -43,12 +46,12 @@ class BookItemController extends Controller {
         if ($request->filled('title')) {
             $query->where('title', 'like', '%' . $request->input('title') . '%');
         }
-        
+
         if ($request->filled('author')) {
             $query->where('author', 'like', '%' . $request->input('author') . '%');
         }
 
-       
+
         $idFilters = ['category_id', 'language_id', 'subject_id', 'grade_id', 'library_id', 'user_id'];
         foreach ($idFilters as $filter) {
             if ($request->filled($filter)) {
@@ -56,12 +59,12 @@ class BookItemController extends Controller {
             }
         }        // 3. Filter by format (book, ebook, all, or metadata_only)
         $format = $request->input('format', 'metadata_only');
-        
+
         if ($format === 'book') {
             // Find BookItems that have physical books in user's library branch
             if ($user && $user->library_branch_id) {
-                $query->whereHas('books', function($q) use ($user) {
-                    $q->whereHas('library', function($libraryQuery) use ($user) {
+                $query->whereHas('books', function ($q) use ($user) {
+                    $q->whereHas('library', function ($libraryQuery) use ($user) {
                         $libraryQuery->where('library_branch_id', $user->library_branch_id);
                     });
                 });
@@ -75,8 +78,8 @@ class BookItemController extends Controller {
             // Find BookItems that have either books (filtered) or ebooks (global)
             $query->where(function ($q) use ($user) {
                 if ($user && $user->library_branch_id) {
-                    $q->whereHas('books', function($bq) use ($user) {
-                        $bq->whereHas('library', function($libraryQuery) use ($user) {
+                    $q->whereHas('books', function ($bq) use ($user) {
+                        $bq->whereHas('library', function ($libraryQuery) use ($user) {
                             $libraryQuery->where('library_branch_id', $user->library_branch_id);
                         });
                     })->orWhereHas('ebooks');
@@ -85,7 +88,7 @@ class BookItemController extends Controller {
                 }
             });
         }
-        
+
         // Always load these base relationships
         $relationships = ['language', 'category', 'subject', 'grade'];
 
@@ -98,24 +101,24 @@ class BookItemController extends Controller {
                 }
             }
         }
-        
+
         // For ebooks, always load teacher information
         if ($format === 'ebook' || $format === 'all') {
             $relationships[] = 'user.staff:id,user_id,first_name,last_name,department';
         }
-        
+
         // Load relationships based on format type
         if ($format === 'book' || $format === 'all') {
             // For books, filter by library_branch_id and get counts
             if ($user && $user->library_branch_id) {
-                $query->withCount(['books' => function($q) use ($user) {
-                    $q->whereHas('library', function($libraryQuery) use ($user) {
+                $query->withCount(['books' => function ($q) use ($user) {
+                    $q->whereHas('library', function ($libraryQuery) use ($user) {
                         $libraryQuery->where('library_branch_id', $user->library_branch_id);
                     });
                 }]);
                 $query->withCount([
                     'books as available_books_count' => function ($q) use ($user) {
-                        $q->whereHas('library', function($libraryQuery) use ($user) {
+                        $q->whereHas('library', function ($libraryQuery) use ($user) {
                             $libraryQuery->where('library_branch_id', $user->library_branch_id);
                         })->where('is_borrowable', true)->where('is_reserved', false);
                     }
@@ -129,7 +132,7 @@ class BookItemController extends Controller {
                 ]);
             }
         }
-        
+
         if ($format === 'ebook' || $format === 'all') {
             // For ebooks, keep global access
             $query->withCount('ebooks'); // Total ebooks count
@@ -138,36 +141,36 @@ class BookItemController extends Controller {
                     $q->where('is_downloadable', true);
                 }
             ]);
-            
+
             // Count ebooks by type (PDF, AUDIO, VIDEO)
             $query->withCount([
                 'ebooks as pdf_ebooks_count' => function ($q) {
-                    $q->whereHas('ebookType', function($q2) {
+                    $q->whereHas('ebookType', function ($q2) {
                         $q2->where('name', 'PDF');
                     });
                 },
                 'ebooks as audio_ebooks_count' => function ($q) {
-                    $q->whereHas('ebookType', function($q2) {
+                    $q->whereHas('ebookType', function ($q2) {
                         $q2->where('name', 'AUDIO');
                     });
                 },
                 'ebooks as video_ebooks_count' => function ($q) {
-                    $q->whereHas('ebookType', function($q2) {
+                    $q->whereHas('ebookType', function ($q2) {
                         $q2->where('name', 'VIDEO');
                     });
                 }
             ]);
         }
-          // Skip loading books/ebooks relationships if metadata_only is specified
+        // Skip loading books/ebooks relationships if metadata_only is specified
         if ($format !== 'metadata_only') {
             // Don't load books and ebooks contents, only metadata and counts
-            $baseRelationshipsOnly = array_filter($relationships, function($rel) {
+            $baseRelationshipsOnly = array_filter($relationships, function ($rel) {
                 return !str_starts_with($rel, 'books.') && !str_starts_with($rel, 'ebooks.') && $rel !== 'books' && $rel !== 'ebooks';
             });
             $query->with($baseRelationshipsOnly);
         } else {
             // For metadata_only, just load the base relationships
-            $baseRelationships = array_filter($relationships, function($rel) {
+            $baseRelationships = array_filter($relationships, function ($rel) {
                 return !str_starts_with($rel, 'books.') && !str_starts_with($rel, 'ebooks.');
             });
             $query->with($baseRelationships);
@@ -183,8 +186,9 @@ class BookItemController extends Controller {
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreBookItemRequest $request) {
-        $user = auth()->user();
+    public function store(StoreBookItemRequest $request)
+    {
+        $user = Auth::user();
         $validated = $request->validated();
 
         // Handle cover image upload if present
@@ -231,7 +235,7 @@ class BookItemController extends Controller {
             // Priority on physical books - filter by library_branch_id
             $bookItem->load(['books' => function ($q) use ($user) {
                 if ($user && $user->library_branch_id) {
-                    $q->whereHas('library', function($libraryQuery) use ($user) {
+                    $q->whereHas('library', function ($libraryQuery) use ($user) {
                         $libraryQuery->where('library_branch_id', $user->library_branch_id);
                     });
                 }
@@ -263,7 +267,7 @@ class BookItemController extends Controller {
             $bookItem->loadCount(['books as available_books_count' => function ($query) use ($user) {
                 $query->where('is_borrowable', true);
                 if ($user && $user->library_branch_id) {
-                    $query->whereHas('library', function($libraryQuery) use ($user) {
+                    $query->whereHas('library', function ($libraryQuery) use ($user) {
                         $libraryQuery->where('library_branch_id', $user->library_branch_id);
                     });
                 }
@@ -287,7 +291,8 @@ class BookItemController extends Controller {
 
     /**
      * Remove the specified resource from storage.
-     */    public function destroy(BookItem $bookItem)
+     */    
+    public function destroy(BookItem $bookItem)
     {
         // First check if there are any books or ebooks associated with this item
         if ($bookItem->books()->count() > 0 || $bookItem->ebooks()->count() > 0) {
@@ -340,7 +345,9 @@ class BookItemController extends Controller {
 
     /**
      * Get the 5 most recently added book items (new arrivals).
-     */    public function newArrivals(Request $request) {
+     */    
+    public function newArrivals(Request $request)
+    {
         $query = BookItem::query();
         $user = $request->user();
 
@@ -362,7 +369,7 @@ class BookItemController extends Controller {
         // Always load books filtered by library branch and ebooks globally
         $query->with(['books' => function ($q) use ($user) {
             if ($user && $user->library_branch_id) {
-                $q->whereHas('library', function($libraryQuery) use ($user) {
+                $q->whereHas('library', function ($libraryQuery) use ($user) {
                     $libraryQuery->where('library_branch_id', $user->library_branch_id);
                 });
             }
@@ -394,7 +401,9 @@ class BookItemController extends Controller {
 
     /**
      * Get featured or recommended book items (top 5 based on a criteria).
-     */    public function featured(Request $request) {
+     */    
+    public function featured(Request $request)
+    {
         $query = BookItem::query();
         $user = $request->user();
 
@@ -411,7 +420,7 @@ class BookItemController extends Controller {
         // Always load books filtered by library branch and ebooks globally
         $query->with(['books' => function ($q) use ($user) {
             if ($user && $user->library_branch_id) {
-                $q->whereHas('library', function($libraryQuery) use ($user) {
+                $q->whereHas('library', function ($libraryQuery) use ($user) {
                     $libraryQuery->where('library_branch_id', $user->library_branch_id);
                 });
             }
@@ -466,17 +475,17 @@ class BookItemController extends Controller {
     public function showPhysicalBook(Request $request, BookItem $bookItem)
     {
         $user = $request->user();
-        
+
         // Make sure we only return physical book data
         $request->merge(['format' => 'book']);
 
         // Check if this BookItem has physical books in the user's library branch
-        $hasBooks = $user && $user->library_branch_id ? 
-            $bookItem->books()->whereHas('library', function($libraryQuery) use ($user) {
+        $hasBooks = $user && $user->library_branch_id ?
+            $bookItem->books()->whereHas('library', function ($libraryQuery) use ($user) {
                 $libraryQuery->where('library_branch_id', $user->library_branch_id);
             })->exists() :
             $bookItem->books()->exists();
-            
+
         if (!$hasBooks) {
             return response()->json([
                 'message' => 'This item is not available as a physical book in your library branch'
@@ -485,7 +494,7 @@ class BookItemController extends Controller {
 
         return $this->show($request, $bookItem);
     }
-    
+
     /**
      * Display a single ebook with its notes and chat messages
      */
@@ -517,12 +526,12 @@ class BookItemController extends Controller {
             $keyword = $request->input('q');
             $query->where(function ($q) use ($keyword) {
                 $q->where('title', 'like', "%$keyword%")
-                  ->orWhere('author', 'like', "%$keyword%")
-                  ->orWhere('description', 'like', "%$keyword%")
-                  ->orWhereHas('subject', function ($sq) use ($keyword) {
-                      $sq->where('name', 'like', "%$keyword%")
-                        ->orWhere('description', 'like', "%$keyword%");
-                  });
+                    ->orWhere('author', 'like', "%$keyword%")
+                    ->orWhere('description', 'like', "%$keyword%")
+                    ->orWhereHas('subject', function ($sq) use ($keyword) {
+                        $sq->where('name', 'like', "%$keyword%")
+                            ->orWhere('description', 'like', "%$keyword%");
+                    });
             });
         }
 
@@ -538,7 +547,7 @@ class BookItemController extends Controller {
         $query->with(['language', 'category', 'subject', 'grade', 'library', 'user']);
         $query->with(['books' => function ($q) use ($user) {
             if ($user && $user->library_branch_id) {
-                $q->whereHas('library', function($libraryQuery) use ($user) {
+                $q->whereHas('library', function ($libraryQuery) use ($user) {
                     $libraryQuery->where('library_branch_id', $user->library_branch_id);
                 });
             }
@@ -582,5 +591,75 @@ class BookItemController extends Controller {
                 'total' => $bookItems->total(),
             ]
         ]);
+    }
+    public function teacherBookItems(Request $request)
+    {
+        $user = $request->user();
+
+        // Query all BookItems using the user's bookItems relationship (no filter on ebooks)
+        $query = $user->bookItems();
+
+        // Search by title and author
+        if ($request->filled('title')) {
+            $query->where('title', 'like', '%' . $request->input('title') . '%');
+        }
+        if ($request->filled('author')) {
+            $query->where('author', 'like', '%' . $request->input('author') . '%');
+        }
+
+        // Filter by IDs
+        $idFilters = ['category_id', 'language_id', 'subject_id', 'grade_id', 'library_id'];
+        foreach ($idFilters as $filter) {
+            if ($request->filled($filter)) {
+                $query->where($filter, $request->input($filter));
+            }
+        }
+
+        // Relationships to load
+        $relationships = ['language', 'category', 'subject', 'grade'];
+
+        // Add user-requested additional relationships
+        if ($request->has('with')) {
+            $requestedWith = explode(',', $request->with);
+            foreach (['library'] as $validRelation) {
+                if (in_array($validRelation, $requestedWith)) {
+                    $relationships[] = $validRelation;
+                }
+            }
+        }
+
+        // Always load teacher info for ebooks
+        $relationships[] = 'user.staff:id,user_id,first_name,last_name,department';
+
+        // Only need counts for ebooks, not actual ebook data
+        $query->withCount('ebooks');
+        $query->withCount([
+            'ebooks as downloadable_ebooks_count' => function ($q) {
+                $q->where('is_downloadable', true);
+            }
+        ]);
+        $query->withCount([
+            'ebooks as pdf_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function ($q2) {
+                    $q2->where('name', 'PDF');
+                });
+            },
+            'ebooks as video_ebooks_count' => function ($q) {
+                $q->whereHas('ebookType', function ($q2) {
+                    $q2->where('name', 'VIDEO');
+                });
+            }
+        ]);
+
+        // Don't load books/ebooks contents, only metadata and counts
+        $baseRelationshipsOnly = array_filter($relationships, function ($rel) {
+            return !str_starts_with($rel, 'books.') && !str_starts_with($rel, 'ebooks.') && $rel !== 'books' && $rel !== 'ebooks';
+        });
+        $query->with($baseRelationshipsOnly);
+
+        // Pagination
+        $perPage = $request->input('per_page', 15);
+        $bookItems = $query->paginate($perPage);
+        return new BookItemCollection($bookItems);
     }
 }
