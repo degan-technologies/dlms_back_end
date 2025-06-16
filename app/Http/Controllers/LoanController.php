@@ -16,21 +16,40 @@ class LoanController extends Controller
     {
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
-        $search = $request->input('search', null);
+        $filter = $request->input('filter', null);
+        $status = $request->input('status', null);
+        $dateRange = $request->input('dateRange', []);
 
         $query = Loan::query();
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('borrow_date', 'like', "%$search%")
-                    ->orWhere('due_date', 'like', "%$search%")
-                    ->orWhere('returned_date', 'like', "%$search%")
-                    ->orWhere('book_id', 'like', "%$search%")
-                    ->orWhere('user_id', 'like', "%$search%")
-                    ->orWhere('library_id', 'like', "%$search%")
-                    ->orWhere('book_item_id', 'like', "%$search%")
-                ;
+        // Filter by search string (filter)
+        if ($filter) {
+            // Get book IDs where the title matches the filter
+            $bookIds = \App\Models\Book::where('title', 'like', "%$filter%")->pluck('id');
+            // Filter loans by those book IDs
+            $query->whereIn('book_id', $bookIds);
+        }
+
+        // Filter by status
+        if ($status) {
+            if (strtolower($status) === 'returned') {
+            // Only include loans where returned_date is a valid date (not null and not empty)
+            $query->whereNotNull('returned_date')->where('returned_date', '!=', '');
+            } else {
+            // For any other status, include loans where returned_date is null or empty
+            $query->where(function ($q) {
+                $q->whereNull('returned_date')->orWhere('returned_date', '');
             });
+            }
+        }
+
+        // Filter by date range (borrow_date)
+        if (is_array($dateRange) && count($dateRange) === 2) {
+            $start = $dateRange[0];
+            $end = $dateRange[1];
+            if ($start && $end) {
+                $query->whereBetween('borrow_date', [$start, $end]);
+            }
         }
 
         $loans = $query->paginate($perPage, ['*'], 'page', $page);

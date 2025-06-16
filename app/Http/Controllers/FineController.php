@@ -14,11 +14,11 @@ class FineController extends Controller
      */
     public function index(Request $request)
     {
-        $perPage = $request->input('per_page', 10); // Accept `per_page` from the request, default to 10
-        $page = $request->input('page', 1); // Accept `page` from the request, default to 1
-        $filters = $request->input('filter', null); // Accept `filter` from the request
-        $status = $request->input('status', null); // Accept `status` from the request
-        $dateRange = $request->input('dateRange', null); // Accept `dateRange` from the request
+        $perPage = $request->input('per_page', 10); 
+        $page = $request->input('page', 1);
+        $filters = $request->input('filter', null); 
+        $status = $request->input('status', null);
+        $dateRange = $request->input('dateRange', null); 
 
         $query = Fine::query();
 
@@ -32,8 +32,12 @@ class FineController extends Controller
             });
         }
 
-        if ($status) {
-            $query->where('payment_status', $status);
+        if ($status !== null) {
+            if ($status === 'Paid' || $status === '1' || $status === 1) {
+            $query->where('payment_status', 1);
+            } elseif ($status === 'Unpaid' || $status === '0' || $status === 0) {
+            $query->where('payment_status', 0);
+            }
         }
 
         if ($dateRange && is_array($dateRange) && count($dateRange) === 2) {
@@ -101,45 +105,31 @@ class FineController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $debug = [];
         $fine = Fine::findOrFail($id);
-
-        $debug['request_all'] = $request->all();
-        $debug['request_files'] = $request->allFiles();
-        $debug['hasFile'] = $request->hasFile('receipt_path');
 
         $validated = $request->validate([
             'payment_date'   => 'nullable|date',
             'payment_status' => 'nullable|string|in:Unpaid,Paid',
-            'receipt_path' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
+            'receipt_path'   => 'nullable|file|mimes:jpg,jpeg,png,pdf',
         ]);
 
-        $debug['validated'] = $validated;
-
-        // Always handle file upload and set path if present
+        // Handle file upload if present
         if ($request->hasFile('receipt_path')) {
             $file = $request->file('receipt_path');
             $path = $file->store('receipts', 'public');
             $validated['receipt_path'] = $path;
-            $debug['stored_path'] = $path;
         }
 
+        // Convert payment_status to boolean
         if (array_key_exists('payment_status', $validated)) {
             $validated['payment_status'] = $validated['payment_status'] === 'Paid' ? true : false;
         }
 
         if (count($validated)) {
             $fine->forceFill($validated)->save();
-            $debug['updated_fine'] = $fine->toArray();
-        } else {
-            $debug['message'] = 'No valid fields to update.';
         }
 
-        // Return debug info alongside resource data
-        return response()->json([
-            'data' => new FineResource($fine->fresh()),
-            'debug' => $debug,
-        ]);
+        return new FineResource($fine->fresh());
     }
 
 

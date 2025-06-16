@@ -5,13 +5,42 @@ namespace App\Http\Controllers;
 use App\Models\Reservation;
 use App\Http\Resources\Reservation\ReservationCollection;
 use App\Models\Book;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
-class ReservationController extends Controller {
+class ReservationController extends Controller
+{
     // List all reservations (with pagination)
-    public function index(Request $request) {
-        $perPage = $request->input('per_page', 30);
-        $reservations = Reservation::paginate($perPage);
+    public function index(Request $request)
+    {
+        $perPage = $request->input('per_page', 5);
+        $query = Reservation::query();
+
+        // Search filter (by reservation_code or user name)
+        if ($search = $request->input('filter')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('reservation_code', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('reservation_code', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Status filter
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        // Date range filter (reservation_date)
+        $dateRange = $request->input('dateRange', []);
+        if (count($dateRange) === 2) {
+            $start = $dateRange[0];
+            $end = $dateRange[1];
+            $query->whereBetween('reservation_date', [$start, $end]);
+        }
+
+        $reservations = $query->paginate($perPage);
+
         return (new ReservationCollection($reservations))
             ->additional([
                 'meta' => [
@@ -24,8 +53,9 @@ class ReservationController extends Controller {
     }
 
     // Store a new reservation
-    public function store(Request $request) {
-        $user = auth()->user();
+    public function store(Request $request)
+    {
+        $user = Auth::user();
 
         // Check if user already has a reservation
         // Check if user already has an active reservation (pending) or an active loan (not returned)
@@ -74,13 +104,15 @@ class ReservationController extends Controller {
     }
 
     // Show a single reservation
-    public function show($id) {
+    public function show($id)
+    {
         $reservation = Reservation::findOrFail($id);
         return response()->json($reservation);
     }
 
     // Update a reservation
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id)
+    {
         $reservation = Reservation::findOrFail($id);
         $validated = $request->validate([
             'reservation_date' => 'nullable|date',
@@ -96,7 +128,8 @@ class ReservationController extends Controller {
     }
 
     // Delete (soft delete) a reservation
-    public function destroy($id) {
+    public function destroy($id)
+    {
         $reservation = Reservation::findOrFail($id);
         $reservation->delete();
         return response()->json(['message' => 'Reservation deleted successfully']);

@@ -15,14 +15,14 @@ Schedule::command('loans:check --type=overdue')
     ->appendOutputTo(storage_path('logs/loans-overdue.log'));
 
 Schedule::command('loans:check --type=upcoming')
-    ->hourly()
+    ->everyFiveMinutes()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/loans-upcoming.log'));
 
 // Schedule: Expire reservations after 1 hour and free the book
-app(ConsoleSchedule::class)->call(function () {
-    $expired = \App\Models\Reservation::where('status', '!=', 'expired')
-        ->where('expiration_time', '<', now())
+Schedule::call(function () {
+    $expired = \App\Models\Reservation::where('status', 'pending')
+        ->where('created_at', '<', now()->subMinutes(5))
         ->get();
     foreach ($expired as $reservation) {
         $reservation->status = 'expired';

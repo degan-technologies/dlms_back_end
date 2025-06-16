@@ -42,9 +42,12 @@ class NotificationResource extends JsonResource
     protected function getDaysOverdue()
     {
         if (!isset($this->data['due_date'])) return null;
-        
-        $dueDate = Carbon::parse($this->data['due_date']);
-        return now()->diffInDays($dueDate, false) * -1; // Returns positive days overdue
+
+        $dueDate = Carbon::parse($this->data['due_date'])->startOfDay();
+        $today = now()->startOfDay();
+        $daysOverdue = $today->diffInDays($dueDate, false) * -1;
+
+        return (int) $daysOverdue;
     }
 
     protected function getLoanUrl()
