@@ -16,7 +16,7 @@ class NotificationResource extends JsonResource
             'title' => $this->getNotificationTitle(),
             'message' => $this->data['message'] ?? null,
             'book' => [
-                'title' => $this->data['book_title'] ?? null,
+                'title' => $this->data['title'] ?? null,
                 'due_date' => $this->data['due_date'] ?? null,
                 'days_overdue' => $this->getDaysOverdue(),
             ],
@@ -26,7 +26,6 @@ class NotificationResource extends JsonResource
             'time_ago' => $this->created_at->diffForHumans(),
             'actions' => [
                 'mark_as_read' => route('notifications.read', $this->id),
-                'view_loan' => $this->getLoanUrl(),
             ]
         ];
     }
@@ -34,7 +33,7 @@ class NotificationResource extends JsonResource
     protected function getNotificationTitle()
     {
         return match($this->type) {
-            'App\\Notifications\\LoanStatusAlert' => 'Book Overdue Notice',
+            'App\\Notifications\\LoanStatusAlert' => 'Loan Status Notice',
             default => 'Library Notification'
         };
     }

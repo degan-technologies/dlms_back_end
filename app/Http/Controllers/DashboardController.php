@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -15,12 +16,12 @@ class DashboardController extends Controller
         $role = $user->roles[0]->name;
 
         $query = Category::whereHas('bookItems.books')
-            ->with(['bookItems' => function($query) {
+            ->with(['bookItems' => function ($query) {
                 $query->has('books');
             }]);
 
         // Role-based filtering
-        switch($role) {
+        switch ($role) {
             case 'superadmin':
                 // No additional filter
                 break;
@@ -28,13 +29,13 @@ class DashboardController extends Controller
             case 'librarian':
                 // Filter categories by user's library_branch_id
                 $libraryBranchId = $user->library_branch_id;
-                $query->whereHas('bookItems', function($q) use ($libraryBranchId) {
+                $query->whereHas('bookItems', function ($q) use ($libraryBranchId) {
                     $q->where('library_id', $libraryBranchId);
                 });
                 break;
             default:
                 // For other roles, restrict further if needed
-                $query->whereHas('bookItems', function($q) use ($user) {
+                $query->whereHas('bookItems', function ($q) use ($user) {
                     $q->where('created_by', $user->id);
                 });
                 break;
@@ -62,5 +63,3 @@ class DashboardController extends Controller
         ]);
     }
 }
-
-  

@@ -18,12 +18,14 @@ class LoanResource extends JsonResource
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
+            'user_name' => $this->user->username,
             'book_id' => $this->book_id,
             'book_title' => $this->book->title,
             'borrow_date' => $this->borrow_date,
             'due_date' => $this->due_date,
             'returned_date' => $this->returned_date,
             'library_id' => $this->library_id,
+            'library_name' => $this->library ? $this->library->name : null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'fine' => $this->fine ? [

@@ -16,8 +16,7 @@ class SectionResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'sectionName' => $this->section_name,
-            'libraryBranchId' => $this->library_branch_id,
+            'sectionName' => $this->name, // Fix here
             'createdAt' => $this->created_at?->toDateTimeString(),
             'updatedAt' => $this->updated_at?->toDateTimeString(),
         ];
