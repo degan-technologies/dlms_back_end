@@ -284,14 +284,27 @@ class BookItemController extends Controller
     {
         $validated = $request->validated();
 
+        // Handle new cover image upload
+        if ($request->hasFile('cover_image')) {
+            // Delete old image if exists
+            if ($bookItem->cover_image && Storage::disk('public')->exists($bookItem->cover_image)) {
+                Storage::disk('public')->delete($bookItem->cover_image);
+            }
+
+            // Store new image
+            $path = $request->file('cover_image')->store('cover_images', 'public');
+            $validated['cover_image'] = $path;
+        }
+
         $bookItem->update($validated);
 
         return new BookItemResource($bookItem);
     }
 
+
     /**
      * Remove the specified resource from storage.
-     */    
+     */
     public function destroy(BookItem $bookItem)
     {
         // First check if there are any books or ebooks associated with this item
@@ -345,7 +358,7 @@ class BookItemController extends Controller
 
     /**
      * Get the 5 most recently added book items (new arrivals).
-     */    
+     */
     public function newArrivals(Request $request)
     {
         $query = BookItem::query();
@@ -401,7 +414,7 @@ class BookItemController extends Controller
 
     /**
      * Get featured or recommended book items (top 5 based on a criteria).
-     */    
+     */
     public function featured(Request $request)
     {
         $query = BookItem::query();

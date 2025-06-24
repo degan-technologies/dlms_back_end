@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\Auth;
 class LoanController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Librarian-specific loan index
      */
-    public function index(Request $request)
+    public function librarianIndex(Request $request)
     {
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
@@ -24,22 +24,18 @@ class LoanController extends Controller
 
         // Filter by search string (filter)
         if ($filter) {
-            // Get book IDs where the title matches the filter
             $bookIds = \App\Models\Book::where('title', 'like', "%$filter%")->pluck('id');
-            // Filter loans by those book IDs
             $query->whereIn('book_id', $bookIds);
         }
 
         // Filter by status
         if ($status) {
             if (strtolower($status) === 'returned') {
-            // Only include loans where returned_date is a valid date (not null and not empty)
-            $query->whereNotNull('returned_date')->where('returned_date', '!=', '');
+                $query->whereNotNull('returned_date')->where('returned_date', '!=', '');
             } else {
-            // For any other status, include loans where returned_date is null or empty
-            $query->where(function ($q) {
-                $q->whereNull('returned_date')->orWhere('returned_date', '');
-            });
+                $query->where(function ($q) {
+                    $q->whereNull('returned_date')->orWhere('returned_date', '');
+                });
             }
         }
 
@@ -53,6 +49,26 @@ class LoanController extends Controller
         }
 
         $loans = $query->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'data' => LoanResource::collection($loans),
+            'meta' => [
+                'total_records' => $loans->total(),
+                'per_page' => $loans->perPage(),
+                'current_page' => $loans->currentPage(),
+                'total_pages' => $loans->lastPage(),
+            ],
+        ]);
+    }
+
+    /**
+     * Admin-specific loan index
+     */
+    public function adminIndex(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+        $loans = Loan::paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'data' => LoanResource::collection($loans),
@@ -107,7 +123,7 @@ class LoanController extends Controller
         $loan = Loan::findOrFail($id);
         $loan->update($validatedData);
 
-        // Set the related book's is_reserved to 0 (false) if returned
+        // Update book reservation status if returned
         if (!empty($validatedData['returned_date']) && $loan->book_id) {
             $book = \App\Models\Book::find($loan->book_id);
             if ($book) {

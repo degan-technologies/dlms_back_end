@@ -25,7 +25,7 @@ class UpdateBookItemRequest extends FormRequest
             'title' => 'sometimes|required|string|max:255',
             'author' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
-            'cover_image' => 'nullable|string',
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp',
             'grade_id' => 'sometimes|required|exists:grades,id',
             'library_id' => 'sometimes|required|exists:libraries,id',
             'category_id' => 'sometimes|required|exists:categories,id',

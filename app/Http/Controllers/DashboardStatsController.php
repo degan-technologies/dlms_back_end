@@ -22,23 +22,21 @@ class DashboardStatsController extends Controller
     {
         $user = Auth::user();
 
-
-
-
         switch ($user->roles[0]->name) {
             case 'superadmin':
                 return response()->json([
-                    'total_branches' =>LibraryBranch::count(),
-                    'total_libraries' =>Library::count(),
-                    'total_admins' => Role::where('name', 'admin')->count(),
-                    'total_users' =>User::count(),
+                    'total_branches' => LibraryBranch::count(),
+                    'total_libraries' => Library::count(),
+                    'total_admins' => User::query()->role('admin')->count(),
+                    'total_users' => User::count(),
                 ]);
+
             case 'admin':
                 return response()->json([
-                    'total_users' =>Role::whereIn('name', ['student', 'librarian', 'teacher'])->count(),
-                    'total_books' =>Book::count(),
-                    'total_ebooks' =>EBook::count(),
-                    'total_collections' =>Collection::count(),
+                    'total_users' => Role::whereIn('name', ['student', 'librarian', 'teacher'])->count(),
+                    'total_books' => Book::count(),
+                    'total_ebooks' => EBook::count(),
+                    'total_collections' => Collection::count(),
                 ]);
             case 'librarian':
                 return response()->json([
@@ -47,16 +45,7 @@ class DashboardStatsController extends Controller
                     'total_categories' => Category::count(),
                     'total_ebooks' => EBook::count(),
                 ]);
-            // case 'teacher':
-            //     return response()->json([
-            //         //'total_collections' => Ebook::where('user_id', $user->id)->count(),
-            //         'total_ebooks' => EBook::where('user_id', $user->id)->count(),
-            //     ]);
-            // case 'student':
-            //     return response()->json([
-            //         'borrowed_books' => BookItem::where('user_id', $user->id)->count(),
-            //         'read_books' => RecentlyViewed::where('user_id', $user->id)->count(),
-            //     ]);
+
             default:
                 return response()->json(['message' => 'Unauthorized'], 403);
         }

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Announcement;
 use App\Models\EBook;
 use App\Models\Loan;
 use App\Models\Staff;
@@ -38,7 +39,7 @@ class DatabaseSeeder  extends Seeder
             LoanSeeder::class,
             FineSeeder::class,
             ReservationSeeder::class,
-
+            
             // User content
             BookmarkSeeder::class,
             NoteSeeder::class,
@@ -46,7 +47,8 @@ class DatabaseSeeder  extends Seeder
             RecentlyViewedSeeder::class,
             CollectionSeeder::class,
             RecentlyViewedSeeder::class,
-            AskLibrarianMessagesSeeder::class
+            AskLibrarianMessagesSeeder::class,
+            AnnouncementSeeder::class,
 
         ]);
     }

@@ -1,75 +1,5 @@
 <?php
 
-//  // app/Http/Controllers/AskLibrarianController.php
-// namespace App\Http\Controllers;
-
-// use App\Models\AskLibrarianMessage;
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\Auth;
-
-// class AskLibrarianController extends Controller
-// {
-//     // Student or librarian can view messages for a given student
-//     public function index(Request $request)
-//     {
-//         $user = Auth::user();
-
-//         // Students can only view their own thread
-//         if ($user->hasRole('student')) {
-//             $studentId = $user->id;
-//         } elseif ($user->hasRole('librarian')) {
-//             $studentId = $request->query('student_id');
-//             if (!$studentId) {
-//                 return response()->json(['error' => 'student_id is required'], 400);
-//             }
-//         } else {
-//             return response()->json(['error' => 'Unauthorized'], 403);
-//         }
-
-//         $messages = AskLibrarianMessage::where('student_id', $studentId)
-//             ->orderBy('created_at')
-//             ->with('sender:id,name')
-//             ->get();
-
-//         return response()->json($messages);
-//     }
-
-//     // Send a message (by student or librarian)
-//     public function store(Request $request)
-//     {
-//         $request->validate([
-//             'message' => 'required|string',
-//             'student_id' => 'sometimes|exists:users,id', // Required only for librarians
-//         ]);
-
-//         $user = Auth::user();
-//         $isStudent = $user->hasRole('student');
-//         $isLibrarian = $user->hasRole('librarian');
-
-//         if ($isStudent) {
-//             $studentId = $user->id;
-//         } elseif ($isLibrarian) {
-//             if (!$request->student_id) {
-//                 return response()->json(['error' => 'student_id is required for librarian replies'], 400);
-//             }
-//             $studentId = $request->student_id;
-//         } else {
-//             return response()->json(['error' => 'Unauthorized'], 403);
-//         }
-
-//         $message = AskLibrarianMessage::create([
-//             'student_id' => $studentId,
-//             'sender_id' => $user->id,
-//             'sender_role' => $isStudent ? 'student' : 'librarian',
-//             'message' => $request->message,
-//         ]);
-
-//         return response()->json($message, 201);
-//     }
-// }
-
-
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -80,24 +10,19 @@ use Illuminate\Support\Str;
 class AskLibrarianController extends Controller
 {
     /**
-     * Fetch all messages for a given session.
+     * Fetch all messages with their replies
      */
     public function index(Request $request)
     {
-        // $request->validate([
-        //     'session_id' => 'required|string',
-        // ]);
-
-        $messages = AskLibrarianMessage::
-        // where('session_id', $request->session_id)
-            orderBy('created_at')
+        $messages = AskLibrarianMessage::with('reply')
+            ->orderBy('created_at')
             ->get();
 
         return response()->json($messages);
     }
 
     /**
-     * Store a new visitor message (with optional file upload).
+     * Store a new visitor message (with optional file upload)
      */
     public function store(Request $request)
     {
@@ -115,16 +40,15 @@ class AskLibrarianController extends Controller
         // Base payload
         $messageData = [
             'session_id' => $sessionId,
-            'name'       => $request->name,    // may be null
-            'email'      => $request->email,   // may be null
+            'name'       => $request->name,
+            'email'      => $request->email,
             'sender'     => 'visitor',
             'message'    => $request->message ?? '',
         ];
 
-        // Handle file upload, if present
+        // Handle file upload
         if ($request->hasFile('file')) {
             $path = $request->file('file')->store('chat_uploads', 'public');
-            // store a publicly-accessible URL
             $messageData['file_url'] = asset('storage/' . $path);
         }
 
@@ -137,25 +61,77 @@ class AskLibrarianController extends Controller
     }
 
     /**
-     * Store a librarian’s reply on an existing session.
+     * Store or update a librarian's reply
      */
     public function reply(Request $request)
     {
         $request->validate([
             'session_id' => 'required|string',
             'message'    => 'required|string',
+            'parent_id'  => 'required|exists:ask_librarian_messages,id',
         ]);
 
-        // We don’t expect a name/email from the librarian side; leave nullable
+        // Check if reply already exists for this question
+        $existingReply = AskLibrarianMessage::where('parent_id', $request->parent_id)->first();
+
+        if ($existingReply) {
+            // Update existing reply
+            $existingReply->update(['message' => $request->message]);
+            return response()->json($existingReply, 200);
+        }
+
+        // Create new reply
         $reply = AskLibrarianMessage::create([
             'session_id' => $request->session_id,
-            'name'       => null,
-            'email'      => null,
+            'parent_id'  => $request->parent_id,
             'sender'     => 'librarian',
             'message'    => $request->message,
-            // file_url will default to null
         ]);
 
         return response()->json($reply, 201);
+    }
+
+    /**
+     * Get messages for a specific session
+     */
+    public function getSessionMessages($sessionId)
+    {
+        $messages = AskLibrarianMessage::with('reply')
+            ->where('session_id', $sessionId)
+            ->orderBy('created_at')
+            ->get();
+
+        return response()->json($messages);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $message = AskLibrarianMessage::findOrFail($id);
+
+        $request->validate([
+            'message' => 'required|string'
+        ]);
+
+        $message->update(['message' => $request->message]);
+
+        return response()->json($message);
+    }
+    // Add these methods to your AskLibrarianController
+
+    /**
+     * Delete a message (question or answer)
+     */
+    public function destroy($id)
+    {
+        $message = AskLibrarianMessage::findOrFail($id);
+
+        // If deleting a question, also delete its answer
+        if ($message->sender === 'visitor') {
+            AskLibrarianMessage::where('parent_id', $id)->delete();
+        }
+
+        $message->delete();
+
+        return response()->json(['success' => true]);
     }
 }

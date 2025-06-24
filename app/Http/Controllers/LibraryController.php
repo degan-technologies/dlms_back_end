@@ -7,11 +7,25 @@ use Illuminate\Http\Request;
 
 class LibraryController extends Controller
 {
-    // List all libraries
     public function index()
     {
-        return response()->json(Library::all(), 200);
+        $authUser = auth('api')->user();
+
+        if (!$authUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // If superadmin, return all libraries
+        if ($authUser->hasRole('superadmin')) {
+            return response()->json(Library::all(), 200);
+        }
+
+        // For other users, return libraries matching their branch
+        $libraries = Library::where('library_branch_id', $authUser->library_branch_id)->get();
+
+        return response()->json($libraries, 200);
     }
+
 
     // Create a new library
     public function store(Request $request)

@@ -1,38 +1,5 @@
 <?php
 
-// // database/migrations/xxxx_xx_xx_create_ask_librarian_messages_table.php
-// use Illuminate\Database\Migrations\Migration;
-// use Illuminate\Database\Schema\Blueprint;
-// use Illuminate\Support\Facades\Schema;
-
-// class CreateAskLibrarianMessagesTable extends Migration
-// {
-//     public function up()
-//     {
-//         Schema::create('ask_librarian_messages', function (Blueprint $table) {
-//             $table->id();
-//             $table->unsignedBigInteger('student_id'); // Conversation owner
-//             $table->unsignedBigInteger('sender_id'); // Who sent the message
-//             $table->enum('sender_role', ['student', 'librarian']);
-//             $table->text('message');
-//             $table->timestamps();
-
-//             $table->foreign('student_id')->references('id')->on('users')->onDelete('cascade');
-//             $table->foreign('sender_id')->references('id')->on('users')->onDelete('cascade');
-//         });
-//     }
-
-//     public function down()
-//     {
-//         Schema::dropIfExists('ask_librarian_messages');
-//     }
-// }
-
-
-
-
-// database/migrations/2025_05_22_213611_create_ask_librarian_messages_table.php
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -49,15 +16,23 @@ return new class extends Migration
         Schema::create('ask_librarian_messages', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('session_id');
+            $table->unsignedBigInteger('parent_id')->nullable()->comment('References the question this message is answering');
             $table->string('name')->nullable();
             $table->string('email')->nullable();
-            $table->string('sender');
+            $table->string('sender'); // 'visitor' or 'librarian'
             $table->text('message');
             $table->string('file_url')->nullable();
             $table->timestamps();
 
-            // Optional: add index for faster lookups
+            // Indexes for better performance
             $table->index('session_id');
+            $table->index('parent_id');
+
+            // Foreign key constraint (self-referencing)
+            $table->foreign('parent_id')
+                ->references('id')
+                ->on('ask_librarian_messages')
+                ->onDelete('cascade');
         });
     }
 
@@ -68,6 +43,11 @@ return new class extends Migration
      */
     public function down()
     {
+        Schema::table('ask_librarian_messages', function (Blueprint $table) {
+            // First drop the foreign key constraint
+            $table->dropForeign(['parent_id']);
+        });
+
         Schema::dropIfExists('ask_librarian_messages');
     }
 };

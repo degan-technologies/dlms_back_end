@@ -120,10 +120,24 @@ class EBookController extends Controller
             $students = \App\Models\User::whereHas('roles', function ($q) {
                 $q->where('name', 'student');
             })->get();
+            $librarians = \App\Models\User::whereHas('roles', function ($q) {
+                $q->where('name', 'librarian');
+            })->get();
+            $admins = \App\Models\User::whereHas('roles', function ($q) {
+                $q->where('name', 'admin');
+            })->get();
             $username = $user->username ?? $user->email ?? 'A user';
             foreach ($students as $student) {
                 Log::info('[DEBUG] Notifying student', ['student_id' => $student->id, 'ebook_id' => $ebook->id]);
                 $student->notify(new \App\Notifications\NewEBookCreatedNotification($ebook, $username));
+            }
+            foreach ($librarians as $librarian) {
+                Log::info('[DEBUG] Notifying librarian', ['librarian_id' => $librarian->id, 'ebook_id' => $ebook->id]);
+                $librarian->notify(new \App\Notifications\NewEBookCreatedNotification($ebook, $username));
+            }
+            foreach ($admins as $admin) {
+                Log::info('[DEBUG] Notifying admin', ['admin_id' => $admin->id, 'ebook_id' => $ebook->id]);
+                $admin->notify(new \App\Notifications\NewEBookCreatedNotification($ebook, $username));
             }
 
             return (new EBookResource($ebook))
