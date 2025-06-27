@@ -124,7 +124,7 @@ Route::middleware('auth:api')->group(function () {
     // Notes CRUD
     Route::resource('notes', NoteController::class);
 
-    // Chat Messages CRUD  
+    // Chat Messages CRUD
     Route::resource('chat-messages', ChatMessageController::class);
 
     // Bookmarks CRUD
