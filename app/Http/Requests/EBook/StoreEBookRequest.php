@@ -26,7 +26,7 @@ class StoreEBookRequest extends FormRequest
             'file_name' => 'required|string|max:255',
             'file_path' => 'nullable|string',
             'pdf_file' => 'nullable|file|mimes:pdf|max:102400',
-            'is_downloadable' => 'nullable|string|in:true,false',
+            'is_downloadable' => 'required|boolean',
             'e_book_type_id' => 'required|exists:e_book_types,id',
         ];
     }
