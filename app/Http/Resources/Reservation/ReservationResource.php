@@ -24,6 +24,7 @@ class ReservationResource extends JsonResource
             'user_name' => $this->user ? $this->user->username : null,
             'book_title' => $this->book ? $this->book->title : null,
             'book_id' => $this->book_id,
+            'book_item_id' => $this->book->book_item_id ?? null,
             'library_id' => $this->library_id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

@@ -92,9 +92,17 @@ class LoanController extends Controller
             'due_date' => 'required|date',
             'return_date' => 'nullable|date',
             'library_id' => 'required|integer',
+            'book_id' => 'required|integer',
+            'user_id' => 'nullable|integer',
         ]);
 
-        $validatedData['student_id'] = Auth::id();
+        // Set both student_id and user_id to the authenticated user's ID if not provided
+        $userId = Auth::id();
+        $validatedData['student_id'] = $userId;
+        if (empty($validatedData['user_id'])) {
+            $validatedData['user_id'] = $userId;
+        }
+
         $loan = Loan::create($validatedData);
         return new LoanResource($loan);
     }
