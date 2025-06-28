@@ -31,13 +31,15 @@ use App\Http\Resources\constant\LanguageResource;
 use Illuminate\Http\Response;
 use App\Http\Resources\Constant\SubjectResource;
 
-class ConstantController extends Controller {
+class ConstantController extends Controller
+{
     /**
      * Get all filter constants in a single call
      * 
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getAllFilters() {
+    public function getAllFilters()
+    {
         $user = Auth::user();
         $libraryBranch = $user ? $user->libraryBranch : null;
         $libraries = $libraryBranch ? $libraryBranch->library()->get()->unique('id')->values() : collect();
@@ -66,18 +68,23 @@ class ConstantController extends Controller {
      * @return \Illuminate\Http\Resources\Json\ResourceCollection
      */
 
-    public function categories(Request $request) {
+    public function categories(Request $request)
+    {
         $page = $request->input('page', 1);
         $perPage = $request->input('per_page', 10);
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDir = $request->input('sort_dir', 'desc');
+        $search = $request->input('search');
 
-        $paginator = Category::with(['bookItems' => function ($q) {
+        $query = Category::with(['bookItems' => function ($q) {
             $q->withCount('books');
-        }])
-            ->withCount('bookItems')
-            ->orderBy($sortBy, $sortDir)
-            ->paginate($perPage);
+        }])->withCount('bookItems');
+
+        if ($search) {
+            $query->where('category_name', 'like', '%' . $search . '%');
+        }
+
+        $paginator = $query->orderBy($sortBy, $sortDir)->paginate($perPage);
 
         // Inject total_books into each category
         $paginator->getCollection()->transform(function ($category) {
@@ -95,7 +102,8 @@ class ConstantController extends Controller {
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function createCategory(Request $request) {
+    public function createCategory(Request $request)
+    {
 
         $validated = $request->validate([
             'category_name' => 'required|string|max:255|unique:categories,category_name'
@@ -121,7 +129,8 @@ class ConstantController extends Controller {
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function updateCategory(Request $request, $id) {
+    public function updateCategory(Request $request, $id)
+    {
         $category = Category::findOrFail($id);
 
         $validated = $request->validate([
@@ -146,7 +155,8 @@ class ConstantController extends Controller {
     }
 
 
-    private function bumpCategoryCacheVersion() {
+    private function bumpCategoryCacheVersion()
+    {
         $version = Cache::get('categories_cache_version', 1);
         Cache::forever('categories_cache_version', $version + 1);
     }
@@ -156,18 +166,21 @@ class ConstantController extends Controller {
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function ebookTypes() {
+    public function ebookTypes()
+    {
         return Cache::remember('ebook-types', 60 * 30, function () {
             return new EbookTypeCollection(EbookType::all());
         });
     }
 
-    public function grades() {
+    public function grades()
+    {
         return Cache::remember('grades', 60 * 30, function () {
             return new GradeCollection(Grade::all());
         });
     }
-    public function libraries() {
+    public function libraries()
+    {
         return Cache::remember('libraries', 60 * 30, function () {
             $user = Auth::user();
             // Get the user's library branch and its related libraries
@@ -178,7 +191,8 @@ class ConstantController extends Controller {
         });
     }
 
-    public function shelves() {
+    public function shelves()
+    {
         return Cache::remember('shelves', 60 * 30, function () {
             $user = Auth::user();
             // Get the user's library branch and its related libraries
@@ -197,13 +211,15 @@ class ConstantController extends Controller {
      * 
      * @return \Illuminate\Http\JsonResponse
      */
-    public function refreshFilterCache() {
+    public function refreshFilterCache()
+    {
         // You can add cache refresh logic here if needed.
         // For now, just return a success response.
         return response()->json(['message' => 'Filter cache refreshed successfully']);
     }
 
-    public function deleteCategory($id) {
+    public function deleteCategory($id)
+    {
         // Eager load bookItems and their related books
         $category = Category::with('bookItems.books')->find($id);
 
@@ -246,7 +262,8 @@ class ConstantController extends Controller {
     /**
      * Invalidate filter cache for languages and subjects
      */
-    private function bumpFilterCacheVersion() {
+    private function bumpFilterCacheVersion()
+    {
         Cache::forget('all-filters');
         Cache::forget('languages');
         Cache::forget('subjects');
@@ -269,7 +286,8 @@ class ConstantController extends Controller {
      * 
      * @return \Illuminate\Http\Resources\Json\ResourceCollection
      */
-    public function subjectIndex(Request $request) {
+    public function subjectIndex(Request $request)
+    {
         $query = Subject::query();
         if ($request->has('search')) {
             $search = $request->search;
@@ -282,7 +300,8 @@ class ConstantController extends Controller {
         return new \App\Http\Resources\Constant\SubjectCollection($subjects);
     }
 
-    public function storeLanguage(StoreLanguageRequest $request) {
+    public function storeLanguage(StoreLanguageRequest $request)
+    {
         $language = Language::create($request->validated());
         $this->bumpLanguageCacheVersion();
         return response()->json([
@@ -291,11 +310,13 @@ class ConstantController extends Controller {
         ], Response::HTTP_CREATED);
     }
 
-    public function showLanguage(Language $language) {
+    public function showLanguage(Language $language)
+    {
         return new LanguageResource($language);
     }
 
-    public function update(UpdateLanguageRequest $request, Language $language) {
+    public function update(UpdateLanguageRequest $request, Language $language)
+    {
         $language->update($request->validated());
         $this->bumpLanguageCacheVersion();
         return response()->json([
@@ -304,18 +325,33 @@ class ConstantController extends Controller {
         ]);
     }
 
-    public function destroy(Language $language) {
+    public function destroy(Language $language)
+    {
+        // Prevent delete if any BookItem is associated with this language
+        $bookItemCount = \App\Models\BookItem::where('language_id', $language->id)->count();
+        if ($bookItemCount > 0) {
+            return response()->json([
+                'message' => 'Cannot delete language because it is used in book items.',
+                'used_in' => 'book_items',
+            ], 409);
+        }
         $language->delete();
         $this->bumpLanguageCacheVersion();
         return response()->json(['message' => 'Language deleted successfully.']);
     }
 
-    public function destroyMultiple(Request $request) {
+    public function destroyMultiple(Request $request)
+    {
         $ids = $request->input('ids', []);
         $failed = [];
         foreach ($ids as $id) {
             $language = Language::find($id);
             if ($language) {
+                $bookItemCount = \App\Models\BookItem::where('language_id', $language->id)->count();
+                if ($bookItemCount > 0) {
+                    $failed[] = $id;
+                    continue;
+                }
                 $language->delete();
             } else {
                 $failed[] = $id;
@@ -324,7 +360,7 @@ class ConstantController extends Controller {
         $this->bumpLanguageCacheVersion();
         if (!empty($failed)) {
             return response()->json([
-                'message' => 'Some languages could not be deleted.',
+                'message' => 'Some languages could not be deleted because they are used in book items.',
                 'failed' => $failed
             ], Response::HTTP_CONFLICT);
         }
@@ -332,7 +368,8 @@ class ConstantController extends Controller {
     }
 
     // --- Language CRUD ---
-    public function languageIndex(Request $request) {
+    public function languageIndex(Request $request)
+    {
         $query = Language::query();
         if ($request->has('search')) {
             $search = $request->search;
@@ -346,7 +383,8 @@ class ConstantController extends Controller {
         return new LanguageCollection($languages);
     }
 
-    public function languageStore(StoreLanguageRequest $request) {
+    public function languageStore(StoreLanguageRequest $request)
+    {
         $language = Language::create($request->validated());
         $this->bumpLanguageCacheVersion();
         return response()->json([
@@ -355,11 +393,13 @@ class ConstantController extends Controller {
         ], 201);
     }
 
-    public function languageShow(Language $language) {
+    public function languageShow(Language $language)
+    {
         return new LanguageResource($language);
     }
 
-    public function languageUpdate(UpdateLanguageRequest $request, Language $language) {
+    public function languageUpdate(UpdateLanguageRequest $request, Language $language)
+    {
         $language->update($request->validated());
         $this->bumpLanguageCacheVersion();
         return response()->json([
@@ -368,18 +408,32 @@ class ConstantController extends Controller {
         ]);
     }
 
-    public function languageDestroy(Language $language) {
+    public function languageDestroy(Language $language)
+    {
+        $bookItemCount = \App\Models\BookItem::where('language_id', $language->id)->count();
+        if ($bookItemCount > 0) {
+            return response()->json([
+                'message' => 'Cannot delete language because it is used in book items.',
+                'used_in' => 'book_items',
+            ], 409);
+        }
         $language->delete();
         $this->bumpLanguageCacheVersion();
         return response()->json(['message' => 'Language deleted successfully.']);
     }
 
-    public function languageDestroyMultiple(Request $request) {
+    public function languageDestroyMultiple(Request $request)
+    {
         $ids = $request->input('ids', []);
         $failed = [];
         foreach ($ids as $id) {
             $language = Language::find($id);
             if ($language) {
+                $bookItemCount = \App\Models\BookItem::where('language_id', $language->id)->count();
+                if ($bookItemCount > 0) {
+                    $failed[] = $id;
+                    continue;
+                }
                 $language->delete();
             } else {
                 $failed[] = $id;
@@ -388,7 +442,7 @@ class ConstantController extends Controller {
         $this->bumpLanguageCacheVersion();
         if (!empty($failed)) {
             return response()->json([
-                'message' => 'Some languages could not be deleted.',
+                'message' => 'Some languages could not be deleted because they are used in book items.',
                 'failed' => $failed
             ], 409);
         }
@@ -396,11 +450,13 @@ class ConstantController extends Controller {
     }
 
     // --- Subject CRUD ---
-    public function subjectShow(Subject $subject) {
+    public function subjectShow(Subject $subject)
+    {
         return new SubjectResource($subject);
     }
 
-    public function subjectUpdate(UpdateSubjectRequest $request, Subject $subject) {
+    public function subjectUpdate(UpdateSubjectRequest $request, Subject $subject)
+    {
         $subject->update($request->validated());
         $this->bumpSubjectCacheVersion();
         return response()->json([
@@ -409,18 +465,32 @@ class ConstantController extends Controller {
         ]);
     }
 
-    public function subjectDestroy(Subject $subject) {
+    public function subjectDestroy(Subject $subject)
+    {
+        $bookItemCount = \App\Models\BookItem::where('subject_id', $subject->id)->count();
+        if ($bookItemCount > 0) {
+            return response()->json([
+                'message' => 'Cannot delete subject because it is used in book items.',
+                'used_in' => 'book_items',
+            ], 409);
+        }
         $subject->delete();
         $this->bumpSubjectCacheVersion();
         return response()->json(['message' => 'Subject deleted successfully.']);
     }
 
-    public function subjectDestroyMultiple(Request $request) {
+    public function subjectDestroyMultiple(Request $request)
+    {
         $ids = $request->input('ids', []);
         $failed = [];
         foreach ($ids as $id) {
             $subject = Subject::find($id);
             if ($subject) {
+                $bookItemCount = \App\Models\BookItem::where('subject_id', $subject->id)->count();
+                if ($bookItemCount > 0) {
+                    $failed[] = $id;
+                    continue;
+                }
                 $subject->delete();
             } else {
                 $failed[] = $id;
@@ -429,20 +499,22 @@ class ConstantController extends Controller {
         $this->bumpSubjectCacheVersion();
         if (!empty($failed)) {
             return response()->json([
-                'message' => 'Some subjects could not be deleted.',
+                'message' => 'Some subjects could not be deleted because they are used in book items.',
                 'failed' => $failed
             ], Response::HTTP_CONFLICT);
         }
         return response()->json(['message' => 'Subjects deleted successfully.']);
     }
 
-    private function bumpLanguageCacheVersion() {
+    private function bumpLanguageCacheVersion()
+    {
         $version = Cache::get('languages_cache_version', 1);
         Cache::forever('languages_cache_version', $version + 1);
         // Only the language cache version is updated. No other caches are affected.
     }
 
-    private function bumpSubjectCacheVersion() {
+    private function bumpSubjectCacheVersion()
+    {
         $version = Cache::get('subjects_cache_version', 1);
         Cache::forever('subjects_cache_version', $version + 1);
         // Only the subject cache version is updated. No other caches are affected.

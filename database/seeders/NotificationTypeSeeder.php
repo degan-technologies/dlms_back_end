@@ -16,9 +16,9 @@ class NotificationTypeSeeder extends Seeder
         ];
 
         foreach ($types as $type) {
-            NotificationType::firstOrCreate([
-                'type' => $type['type']
-            ]);
+            NotificationType::firstOrCreate(
+                ['type' => $type['type']],
+            );
         }
 
         $this->command->info('Notification types seeded successfully.');

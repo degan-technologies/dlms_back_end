@@ -13,16 +13,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use App\Notifications\NewEBookCreatedNotification;
 
-class EBookController extends Controller {
+
+class EBookController extends Controller
+{
     /**
      * Display a listing of the resource.
-     */    public function index(Request $request) {
+     */    public function index(Request $request)
+    {
         $query = EBook::query();
 
         // Always load required relationships for EBook resource
         $query->with(['bookmarks', 'notes', 'chatMessages', 'collections', 'ebookType']);
-        
+
         // Also include interaction counts
         $query->withCount(['bookmarks', 'notes', 'chatMessages', 'collections']);
 
@@ -38,10 +44,8 @@ class EBookController extends Controller {
             $query->where('e_book_type_id', $request->e_book_type_id);
         }
 
-        if ($request->has('title')) {
-            $query->whereHas('bookItem', function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->title . '%');
-            });
+        if ($request->has('file_name')) {
+            $query->where('file_name', 'like', '%' . $request->file_name . '%');
         }
 
         // Include additional relationships if requested
@@ -49,7 +53,7 @@ class EBookController extends Controller {
             $relationships = explode(',', $request->with);
             $allowedRelations = ['bookItem', 'ebookType', 'bookmarks', 'notes', 'collections'];
             $additionalRelations = array_diff(array_intersect($relationships, $allowedRelations), ['bookmarks', 'notes', 'chatMessages', 'collections', 'ebookType']);
-            
+
             if (!empty($additionalRelations)) {
                 $query->with($additionalRelations);
             }
@@ -74,8 +78,9 @@ class EBookController extends Controller {
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreEBookRequest $request) {
-        $user = auth()->user();
+    public function store(StoreEBookRequest $request)
+    {
+        $user = Auth::user();
         $validated = $request->validated();
         if (isset($validated['is_downloadable'])) {
             $validated['is_downloadable'] = filter_var($validated['is_downloadable'], FILTER_VALIDATE_BOOLEAN);
@@ -111,6 +116,30 @@ class EBookController extends Controller {
 
             $ebook->load(['bookItem', 'ebookType']);
 
+            // Notify students about the new ebook
+            $students = \App\Models\User::whereHas('roles', function ($q) {
+                $q->where('name', 'student');
+            })->get();
+            $librarians = \App\Models\User::whereHas('roles', function ($q) {
+                $q->where('name', 'librarian');
+            })->get();
+            $admins = \App\Models\User::whereHas('roles', function ($q) {
+                $q->where('name', 'admin');
+            })->get();
+            $username = $user->username ?? $user->email ?? 'A user';
+            foreach ($students as $student) {
+                Log::info('[DEBUG] Notifying student', ['student_id' => $student->id, 'ebook_id' => $ebook->id]);
+                $student->notify(new \App\Notifications\NewEBookCreatedNotification($ebook, $username));
+            }
+            foreach ($librarians as $librarian) {
+                Log::info('[DEBUG] Notifying librarian', ['librarian_id' => $librarian->id, 'ebook_id' => $ebook->id]);
+                $librarian->notify(new \App\Notifications\NewEBookCreatedNotification($ebook, $username));
+            }
+            foreach ($admins as $admin) {
+                Log::info('[DEBUG] Notifying admin', ['admin_id' => $admin->id, 'ebook_id' => $ebook->id]);
+                $admin->notify(new \App\Notifications\NewEBookCreatedNotification($ebook, $username));
+            }
+
             return (new EBookResource($ebook))
                 ->response()
                 ->setStatusCode(Response::HTTP_CREATED);
@@ -124,7 +153,8 @@ class EBookController extends Controller {
 
     /**
      * Display the specified resource.
-     */    public function show(Request $request, EBook $ebook) {
+     */    public function show(Request $request, EBook $ebook)
+    {
         // Always load required relationships
         $ebook->load(['bookmarks', 'notes', 'chatMessages', 'collections', 'ebookType']);
         $ebook->loadCount(['bookmarks', 'notes', 'chatMessages', 'collections']);
@@ -134,7 +164,7 @@ class EBookController extends Controller {
             $relationships = explode(',', $request->with);
             $allowedRelations = ['bookItem', 'ebookType', 'bookmarks', 'notes', 'collections'];
             $additionalRelations = array_diff(array_intersect($relationships, $allowedRelations), ['bookmarks', 'notes', 'chatMessages', 'collections', 'ebookType']);
-            
+
             if (!empty($additionalRelations)) {
                 $ebook->load($additionalRelations);
             }
@@ -155,7 +185,8 @@ class EBookController extends Controller {
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateEBookRequest $request, EBook $ebook) {
+    public function update(UpdateEBookRequest $request, EBook $ebook)
+    {
         $validated = $request->validated();
 
         // Update the ebook
@@ -170,7 +201,8 @@ class EBookController extends Controller {
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(EBook $ebook) {
+    public function destroy(EBook $ebook)
+    {
         try {
             DB::beginTransaction();
 

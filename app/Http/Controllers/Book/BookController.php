@@ -16,18 +16,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 
-class BookController extends Controller {
+class BookController extends Controller
+{
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
         $query = Book::query();
 
         // Apply filters if provided
         if ($request->has('title')) {
-            $query->whereHas('bookItem', function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->title . '%');
-            });
+            $query->where('title', 'like', '%' . $request->title . '%');
         }
         if ($request->has('book_item_id')) {
             $query->where('book_item_id', $request->book_item_id);
@@ -66,7 +66,8 @@ class BookController extends Controller {
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreBookRequest $request) {
+    public function store(StoreBookRequest $request)
+    {
         $user = auth()->user();
         $validated = $request->validated();
         if (isset($validated['is_borrowable'])) {
@@ -96,7 +97,8 @@ class BookController extends Controller {
     /**
      * Display the specified resource.
      */
-    public function show(Request $request, Book $book) {
+    public function show(Request $request, Book $book)
+    {
         // Include relationships if requested
         if ($request->has('with')) {
             $relationships = explode(',', $request->with);
@@ -119,8 +121,24 @@ class BookController extends Controller {
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateBookRequest $request, Book $book) {
+    public function update(UpdateBookRequest $request, Book $book)
+    {
         $validated = $request->validated();
+
+        // Handle new cover image upload before updating the book
+      if ($request->hasFile('cover_image')) {
+    // Delete old image
+    if ($book->cover_image) {
+        $oldPath = str_replace(url('/storage') . '/', '', $book->cover_image); // Clean up
+        if (Storage::disk('public')->exists($oldPath)) {
+            Storage::disk('public')->delete($oldPath);
+        }
+    }
+
+    // Upload and store only relative path
+    $path = $request->file('cover_image')->store('cover_images', 'public');
+    $validated['cover_image'] = $path; // Do NOT use Storage::url here
+}
 
         // Update the book
         $book->update($validated);
@@ -142,10 +160,12 @@ class BookController extends Controller {
         return new BookResource($book);
     }
 
+
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Book $book) {
+    public function destroy(Book $book)
+    {
         try {
             DB::beginTransaction();
 

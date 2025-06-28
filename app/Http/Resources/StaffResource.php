@@ -25,7 +25,6 @@ public function toArray($request)
                 'username' => $this->user->username ?? null,
                 'email' => $this->user->email ?? null,
                 'phone_no' => $this->user->phone_no ?? null,
-                'password'=>$this->user->password??null,
 
             ];
         }),

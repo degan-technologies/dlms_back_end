@@ -16,7 +16,7 @@ class NotificationResource extends JsonResource
             'title' => $this->getNotificationTitle(),
             'message' => $this->data['message'] ?? null,
             'book' => [
-                'title' => $this->data['book_title'] ?? null,
+                'title' => $this->data['title'] ?? null,
                 'due_date' => $this->data['due_date'] ?? null,
                 'days_overdue' => $this->getDaysOverdue(),
             ],
@@ -26,7 +26,6 @@ class NotificationResource extends JsonResource
             'time_ago' => $this->created_at->diffForHumans(),
             'actions' => [
                 'mark_as_read' => route('notifications.read', $this->id),
-                'view_loan' => $this->getLoanUrl(),
             ]
         ];
     }
@@ -34,7 +33,7 @@ class NotificationResource extends JsonResource
     protected function getNotificationTitle()
     {
         return match($this->type) {
-            'App\\Notifications\\LoanStatusAlert' => 'Book Overdue Notice',
+            'App\\Notifications\\LoanStatusAlert' => 'Loan Status Notice',
             default => 'Library Notification'
         };
     }
@@ -42,9 +41,12 @@ class NotificationResource extends JsonResource
     protected function getDaysOverdue()
     {
         if (!isset($this->data['due_date'])) return null;
-        
-        $dueDate = Carbon::parse($this->data['due_date']);
-        return now()->diffInDays($dueDate, false) * -1; // Returns positive days overdue
+
+        $dueDate = Carbon::parse($this->data['due_date'])->startOfDay();
+        $today = now()->startOfDay();
+        $daysOverdue = $today->diffInDays($dueDate, false) * -1;
+
+        return (int) $daysOverdue;
     }
 
     protected function getLoanUrl()

@@ -38,37 +38,45 @@ class LoanStatusAlert extends Notification implements ShouldQueue
             'message' => $this->getMessage(),
             'status' => $this->getStatus(),
             'created_at' => now()->toDateTimeString(),
-            'actions' => [
-                'view_loan' => route('loans.show', $this->loan->id),
-                'renew' => $this->daysDiff > 0 ? route('loans.renew', $this->loan->id) : null,
-            ]
         ];
     }
-public function toMail($notifiable)
-{
-    $userName = $notifiable->name ?? 'User'; // fallback if no name
-    $loanStatus = $this->loan->status ?? 'unknown'; // example property, adjust to your model
+    public function toMail($notifiable)
+    {
+        $userName = $notifiable->username ?? ($notifiable->username ?? 'Library User');
+        $bookTitle = $this->loan->book->title ?? 'your book';
+        $dueDate = $this->loan->due_date ? Carbon::parse($this->loan->due_date)->toFormattedDateString() : 'unknown date';
+        $status = $this->getStatus();
+        $message = $this->getMessage();
 
-    return (new MailMessage)
-        ->greeting("Hello {$userName},")
-        ->line("Your loan status has changed to {$loanStatus}.")
-        ->action('View Loan Details', url("/loans/{$this->loan->id}"))
-        ->line('Thank you for using our service!');
-}
+        $statusText = [
+            'overdue' => 'Overdue',
+            'due_today' => 'Due Today',
+            'due_soon' => 'Due Soon',
+            'upcoming' => 'Upcoming',
+        ][$status] ?? ($status ? ucfirst($status) : 'Loan Reminder');
 
-
-protected function getLoanStatusText()
-{
-    if ($this->loan->returned_date) {
-        return 'Returned';
+        return (new MailMessage)
+            ->greeting("Hello {$userName},")
+            ->line("This is a reminder about your loan for '{$bookTitle}'.")
+            ->line("Due Date: {$dueDate}")
+            ->line("Status: {$statusText}")
+            ->line($message)
+            ->line('Thank you for using our library service!');
     }
 
-    if ($this->daysDiff < 0) {
-        return 'Pending';
-    }
 
-    return 'Overdue';
-}
+    protected function getLoanStatusText()
+    {
+        if ($this->loan->returned_date) {
+            return 'Returned';
+        }
+
+        if ($this->daysDiff < 0) {
+            return 'Pending';
+        }
+
+        return 'Overdue';
+    }
 
 
 
@@ -76,24 +84,31 @@ protected function getLoanStatusText()
     protected function getMessage()
     {
         $title = $this->loan->book->title ?? 'your book';
+        $days = (int) $this->daysDiff;
 
-        if ($this->daysDiff > 0) {
-            return "Reminder: '{$title}' is due in {$this->daysDiff} day" . ($this->daysDiff !== 1 ? 's' : '') . "";
+        if ($days > 3) {
+            return "Upcoming: '{$title}' is due in {$days} days.";
         }
-
-        if ($this->daysDiff === 0) {
+        if ($days >= 1 && $days <= 3) {
+            return "Reminder: '{$title}' is due in {$days} day" . ($days !== 1 ? 's' : '') . ".";
+        }
+        if ($days === 0) {
             return "URGENT: '{$title}' is due today!";
         }
-
-        return "OVERDUE: '{$title}' is " . abs($this->daysDiff) . " day" . (abs($this->daysDiff) !== 1 ? 's' : '') . " late!";
+        if ($days < 0) {
+            return "OVERDUE: '{$title}' is " . abs($days) . " day" . (abs($days) !== 1 ? 's' : '') . " late!";
+        }
+        return "Loan status update for '{$title}'.";
     }
 
     protected function getStatus()
     {
-        if ($this->daysDiff < 0) return 'overdue';
-        if ($this->daysDiff === 0) return 'due_today';
-        if ($this->daysDiff <= 3) return 'due_soon';
-        return 'active';
+        $days = (int) $this->daysDiff;
+        if ($days < 0) return 'overdue';
+        if ($days === 0) return 'due_today';
+        if ($days >= 1 && $days <= 3) return 'due_soon';
+        if ($days > 3) return 'upcoming';
+        return 'unknown';
     }
 
     public function toBroadcast($notifiable)

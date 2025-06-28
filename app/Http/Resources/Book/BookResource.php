@@ -22,6 +22,7 @@ class BookResource extends JsonResource {
             'pages' => $this->pages,
             'is_borrowable' => $this->is_borrowable,
             'is_reserved' => $this->is_reserved,
+            'isbn' => $this->isbn,
             'library' => [
                 'id' => $this->library?->id,
                 'name' => $this->library?->name,

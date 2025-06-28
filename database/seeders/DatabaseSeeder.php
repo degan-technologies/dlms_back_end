@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Announcement;
 use App\Models\EBook;
 use App\Models\Loan;
 use App\Models\Staff;
@@ -31,22 +32,24 @@ class DatabaseSeeder  extends Seeder
             EbookReadingSeeder::class,
 
             NotificationTypeSeeder::class,
+            NotificationSeeder::class,
             AskLibrarianSeeder::class,
-
-            // Books and related items
-            BookConditionSeeder::class,
 
             // Loan and reservation related
             LoanSeeder::class,
             FineSeeder::class,
             ReservationSeeder::class,
-
+            
             // User content
             BookmarkSeeder::class,
             NoteSeeder::class,
             ChatMessageSeeder::class,
             RecentlyViewedSeeder::class,
             CollectionSeeder::class,
+            RecentlyViewedSeeder::class,
+            AskLibrarianMessagesSeeder::class,
+            AnnouncementSeeder::class,
+
         ]);
     }
 }

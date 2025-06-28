@@ -10,30 +10,65 @@ use Illuminate\Support\Facades\Auth;
 class LoanController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Librarian-specific loan index
      */
-    public function index(Request $request)
+    public function librarianIndex(Request $request)
     {
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
-        $search = $request->input('search', null);
+        $filter = $request->input('filter', null);
+        $status = $request->input('status', null);
+        $dateRange = $request->input('dateRange', []);
 
         $query = Loan::query();
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('borrow_date', 'like', "%$search%")
-                    ->orWhere('due_date', 'like', "%$search%")
-                    ->orWhere('returned_date', 'like', "%$search%")
-                    ->orWhere('book_id', 'like', "%$search%")
-                    ->orWhere('user_id', 'like', "%$search%")
-                    ->orWhere('library_id', 'like', "%$search%")
-                    ->orWhere('book_item_id', 'like', "%$search%")
-                ;
-            });
+        // Filter by search string (filter)
+        if ($filter) {
+            $bookIds = \App\Models\Book::where('title', 'like', "%$filter%")->pluck('id');
+            $query->whereIn('book_id', $bookIds);
+        }
+
+        // Filter by status
+        if ($status) {
+            if (strtolower($status) === 'returned') {
+                $query->whereNotNull('returned_date')->where('returned_date', '!=', '');
+            } else {
+                $query->where(function ($q) {
+                    $q->whereNull('returned_date')->orWhere('returned_date', '');
+                });
+            }
+        }
+
+        // Filter by date range (borrow_date)
+        if (is_array($dateRange) && count($dateRange) === 2) {
+            $start = $dateRange[0];
+            $end = $dateRange[1];
+            if ($start && $end) {
+                $query->whereBetween('borrow_date', [$start, $end]);
+            }
         }
 
         $loans = $query->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'data' => LoanResource::collection($loans),
+            'meta' => [
+                'total_records' => $loans->total(),
+                'per_page' => $loans->perPage(),
+                'current_page' => $loans->currentPage(),
+                'total_pages' => $loans->lastPage(),
+            ],
+        ]);
+    }
+
+    /**
+     * Admin-specific loan index
+     */
+    public function adminIndex(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+        $loans = Loan::paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'data' => LoanResource::collection($loans),
@@ -57,9 +92,17 @@ class LoanController extends Controller
             'due_date' => 'required|date',
             'return_date' => 'nullable|date',
             'library_id' => 'required|integer',
+            'book_id' => 'required|integer',
+            'user_id' => 'nullable|integer',
         ]);
 
-        $validatedData['student_id'] = Auth::id();
+        // Set both student_id and user_id to the authenticated user's ID if not provided
+        $userId = Auth::id();
+        $validatedData['student_id'] = $userId;
+        if (empty($validatedData['user_id'])) {
+            $validatedData['user_id'] = $userId;
+        }
+
         $loan = Loan::create($validatedData);
         return new LoanResource($loan);
     }
@@ -88,7 +131,7 @@ class LoanController extends Controller
         $loan = Loan::findOrFail($id);
         $loan->update($validatedData);
 
-        // Set the related book's is_reserved to 0 (false) if returned
+        // Update book reservation status if returned
         if (!empty($validatedData['returned_date']) && $loan->book_id) {
             $book = \App\Models\Book::find($loan->book_id);
             if ($book) {

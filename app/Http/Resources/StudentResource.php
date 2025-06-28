@@ -13,36 +13,26 @@ class StudentResource extends JsonResource
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
             'adress' => $this->adress,
-            'grade_id' => $this->grade_id,
-            'section_id' => $this->section_id,
+            'grade' => [
+                'id' => $this->grade_id,
+                'name' => $this->grade->name ?? null
+            ],
+            'section' => [
+                'id' => $this->section_id,
+                'name' => $this->section->name ?? null
+            ],
             'gender' => $this->gender,
             'user_id' => $this->user_id,
-            'library_branch_id' => $this->library_branch_id,
             'user' => $this->whenLoaded('user', function () {
                 return [
                     'id' => $this->user->id ?? null,
                     'username' => $this->user->username ?? null,
                     'email' => $this->user->email ?? null,
                     'phone_no' => $this->user->phone_no ?? null,
-                    'password'=>$this->user->password??null,
+                    'password' => $this->user->password ?? null,
+                    'library_branch_name' => $this->user->libraryBranch->branch_name ?? null,
                 ];
             }),
-            'grade' => $this->whenLoaded('grade', function () {
-                return [
-                    'id' => $this->grade->id ?? null,
-                    'name' => $this->grade->grade_name ?? null,
-                
-                ];
-            }),
-            'section' => $this->whenLoaded('section', function () {
-                return [
-                    'id' => $this->section->id ?? null,
-                    'name' => $this->section->section_name ?? null,
-                    
-                ];
-            }),
-            // 'created_at' => $this->created_at,
-            // 'updated_at' => $this->updated_at,
         ];
     }
 }
